@@ -107,12 +107,13 @@ export class Object3D implements Drawable {
 
     public draw(_: WebGL2RenderingContext, projectionMatrix: Matrix4, viewMatrix: Matrix4): void {
         this._gl.bindVertexArray(this._vao);
-        this._material.use();
         const modelMatrix = this.generateModelMatrix();
         this._material.setUniform('u_projectionMatrix', this._gl.FLOAT_MAT4, projectionMatrix);
         this._material.setUniform('u_viewMatrix', this._gl.FLOAT_MAT4, viewMatrix);
         this._material.setUniform('u_modelMatrix', this._gl.FLOAT_MAT4, modelMatrix);
         this._material.setUniform('u_pvmMatrix', this._gl.FLOAT_MAT4, projectionMatrix.clone().multiplyRight(viewMatrix).multiplyRight(modelMatrix));
+
+        this._material.use();
 
         this._gl.drawArrays(this._gl.TRIANGLES, 0, this._vertexCount);
     }
