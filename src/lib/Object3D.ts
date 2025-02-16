@@ -45,17 +45,42 @@ export class Object3D implements Drawable {
         const normals: number[] = [];
         const uvs: number[] = [];
         this._vertexCount = 0;
+        let needsVertexNormalsCalculated: boolean = false;
         this._model.faces.forEach((face) => {
             face.vertices.forEach((vertex) => {
                 var pos = this._model.vertices[vertex.vertexIndex - 1];
                 verticies.push(pos.x, pos.y, pos.z);
+
                 var normal = this._model.vertexNormals[vertex.vertexNormalIndex - 1];
-                normals.push(normal.x, normal.y, normal.z);
+                if (normal == undefined) {
+                    needsVertexNormalsCalculated = true;
+                } else {
+                    normals.push(normal.x, normal.y, normal.z);
+                }
+                
                 var uv = this._model.textureCoords[vertex.textureCoordsIndex - 1];
-                uvs.push(uv.u, uv.v);
+                if (uv == undefined) {
+                    uvs.push(0, 0);
+                } else {
+                    uvs.push(uv.u, uv.v);
+                }
                 this._vertexCount++;
             });
         });
+
+        if (needsVertexNormalsCalculated) {
+            for (let i = 0; i < verticies.length; i += 9) {
+                const v1 = new Vector3(verticies[i], verticies[i + 1], verticies[i + 2]);
+                const v2 = new Vector3(verticies[i + 3], verticies[i + 4], verticies[i + 5]);
+                const v3 = new Vector3(verticies[i + 6], verticies[i + 7], verticies[i + 8]);
+
+                const normal = v2.clone().subtract(v1).cross(v3.clone().subtract(v1)).normalize();
+
+                normals.push(normal.x, normal.y, normal.z);
+                normals.push(normal.x, normal.y, normal.z);
+                normals.push(normal.x, normal.y, normal.z);
+            }
+        }
 
         this._gl.bindBuffer(this._gl.ARRAY_BUFFER, vertexBuffer);
         this._gl.bufferData(this._gl.ARRAY_BUFFER, new Float32Array(verticies), this._gl.STATIC_DRAW);
