@@ -98,7 +98,7 @@ export class Object3D implements Drawable {
     }
 
     private generateModelMatrix(): Matrix4 {
-        return Matrix4.IDENTITY.clone().translate(this._position).rotateXYZ(this._rotation).scale(this._scale);
+        return Matrix4.IDENTITY.clone().translate(this._position).scale(this._scale).rotateXYZ(this._rotation);
     }
 
     public draw(gl: WebGL2RenderingContext, projectionMatrix: Matrix4, viewMatrix: Matrix4): void {
@@ -115,6 +115,15 @@ export class Object3D implements Drawable {
         this._rotation[0] = x;
         this._rotation[1] = y;
         this._rotation[2] = z;
-
+    }
+    public setScale(x: number, y: number, z: number): void {
+        this._scale[0] = x;
+        this._scale[1] = y;
+        this._scale[2] = z;
+    }
+    public setPosition(x: number, y: number, z: number): void {
+        this._position[0] = x;
+        this._position[1] = y;
+        this._position[2] = z;
     }
 }
