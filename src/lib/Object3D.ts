@@ -1,4 +1,4 @@
-import ObjFileParser, { Vertex, VertexTexture } from "obj-file-parser";
+import ObjFileParser from "obj-file-parser";
 import Drawable from "./interface/Drawable";
 import { Program } from "./Program";
 
@@ -74,27 +74,6 @@ export class Object3D implements Drawable {
 
 
         this._gl.bindVertexArray(null);
-    }
-
-    private static flatten(stuff: Vertex[]): Float32Array {
-        let result = new Float32Array(stuff.length * 3);
-        let i = 0;
-        stuff.forEach((vertex: Vertex) => {
-            result[i++] = vertex.x;
-            result[i++] = vertex.y;
-            result[i++] = vertex.z;
-        });
-        return result;
-    }
-
-    private static flattenUv(stuff: VertexTexture[]): Float32Array {
-        let result = new Float32Array(stuff.length * 2);
-        let i = 0;
-        stuff.forEach((vertex: VertexTexture) => {
-            result[i++] = vertex.u;
-            result[i++] = vertex.v;
-        });
-        return result;
     }
 
     private generateModelMatrix(): Matrix4 {
