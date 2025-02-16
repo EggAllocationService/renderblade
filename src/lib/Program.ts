@@ -91,6 +91,9 @@ export class Program {
             case this._gl.FLOAT_VEC4:
                 this._gl.uniform4f(location, data[0], data[1], data[2], data[3]);
                 break;
+            case this._gl.FLOAT_MAT4:
+                this._gl.uniformMatrix4fv(location, false, data[0]);
+                break;
             default:
                 throw new Error(`Unsupported uniform type ${type}`);
         }
@@ -103,14 +106,6 @@ export class Program {
             if (!this._uniforms.has(key)) continue;
             this.setUniformInternal(key, this._uniformValues.get(key)!.type, this._uniformValues.get(key)!.data);
         }
-    }
-
-    public setUniformMatrix(name: string, matrix: Matrix4, transpose: boolean = false) {
-        let location: WebGLUniformLocation | undefined = this._uniforms.get(name);
-        if (location === undefined) {
-            throw new Error(`Failed to find uniform ${name}`);
-        }
-        this._gl.uniformMatrix4fv(location, transpose, matrix);
     }
 
 }
