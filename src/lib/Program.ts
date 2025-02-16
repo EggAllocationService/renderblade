@@ -6,6 +6,7 @@ export class Program {
     private _gl: WebGL2RenderingContext;
     private _program: WebGLProgram;
     private _uniforms = new Map<string, WebGLUniformLocation>();
+    private _uniformValues = new Map<string, {type: number, data: any[]}>();
 
     constructor(gl: WebGL2RenderingContext, vsText: string, fsText: string) {
         this._gl = gl;
@@ -31,7 +32,6 @@ export class Program {
         // Cache uniform locations
 
         let numUniforms: number = this._gl.getProgramParameter(this._program, this._gl.ACTIVE_UNIFORMS);
-        console.log("Uniforms: ", numUniforms, this)
         for (let i: number = 0; i < numUniforms; i++) {
             let info: WebGLActiveInfo | null = this._gl.getActiveUniform(this._program, i);
             if (info === null) {
@@ -42,8 +42,6 @@ export class Program {
             if (location === null) {
                 continue;
             }
-
-            console.log("Uniform: ", info.name, location)
 
             this._uniforms.set(info.name, location);
         }
@@ -68,6 +66,10 @@ export class Program {
     }
 
     public setUniform(name: string, type: number, ...data: any[]) {
+        this._uniformValues.set(name, {type, data});
+    }
+
+    private setUniformInternal(name: string, type: number, data: any[]) {
         let location: WebGLUniformLocation | undefined = this._uniforms.get(name);
         if (location === undefined) {
             throw new Error(`Failed to find uniform ${name}`);
@@ -96,6 +98,10 @@ export class Program {
 
     public use() {
         this._gl.useProgram(this._program);
+        //console.log(this._uniformValues);
+        for (var key of this._uniformValues.keys()) {
+            this.setUniformInternal(key, this._uniformValues.get(key)!.type, this._uniformValues.get(key)!.data);
+        }
     }
 
     public setUniformMatrix(name: string, matrix: Matrix4, transpose: boolean = false) {

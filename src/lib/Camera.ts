@@ -41,6 +41,12 @@ export class Camera {
         this._postBuffer.bindWriteAsTarget();
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT)
         this._postBuffer.unbind();
+
+        this._postBuffer.swap();
+        this._postBuffer.bindWriteAsTarget();
+        this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT)
+        this._postBuffer.unbind();
+
     }
 
     public draw(drawable: Drawable) {
@@ -65,6 +71,7 @@ export class Camera {
         this._postBuffer.bindReadToTexture(0);
         program.setUniform('uColor', this._gl.INT, 0);
         this._gl.drawArrays(this._gl.TRIANGLE_STRIP, 0, 4);
+
         this._postBuffer.unbind();
         this._postBuffer.swap();
     }

@@ -4,7 +4,8 @@ import cubeObj from './Cube.obj?raw'
 import { Camera } from './lib/Camera';
 import { Object3D } from './lib/Object3D';
 import { PostEffect } from './lib/PostEffect';
-import invertFs from './lib/shaders/invert.frag?raw'
+import quantizeFs from './quantize.frag?raw'
+import rainbowFs from './rainbow.frag?raw'
 
 const app = document.getElementById('app') as HTMLDivElement;
 
@@ -20,7 +21,8 @@ camera.setPerspectiveMatrix(Math.PI / 4, canvas.width / canvas.height, 0.1, 100)
 
 const cube = new Object3D(gl, cubeObj);
 const monkey = new Object3D(gl, monkeyObj);
-const invertEffect = new PostEffect(gl, invertFs);
+const quantizeEffect = new PostEffect(gl, quantizeFs);
+const rainbowEffect = new PostEffect(gl, rainbowFs);
 camera.setPostProcessing(true);
 
 const loc = 1.0;
@@ -32,7 +34,11 @@ let rotationDeg = 0;
 gl.enable(gl.DEPTH_TEST);
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
+console.log(rainbowEffect);
+var start = Date.now();
+
 function render() {
+    var delta = Date.now() - start;
     camera.clear();
     rotationDeg += 1;
     rotationDeg %= 360;
@@ -44,7 +50,11 @@ function render() {
     monkey.setPosition(1 * Math.sin(Date.now() / 1000), -1 * Math.sin(Date.now() / 1000), 0);
     camera.draw(cube);
     camera.draw(monkey);
+
     camera.postStart();
+    camera.postPass(quantizeEffect);
+    rainbowEffect.setUniform("uTime", gl.FLOAT, delta / 1000);
+    camera.postPass(rainbowEffect);
     camera.postFinished();
 
     requestAnimationFrame(render);
