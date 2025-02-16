@@ -15,7 +15,7 @@ out vec3 v_normal;
 
 void main() {
     v_uv = a_uv;
-    v_normal = a_normal;
+    v_normal = transpose(inverse(mat3(u_modelMatrix))) * a_normal;
     gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;
 
 }
