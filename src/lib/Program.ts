@@ -31,6 +31,7 @@ export class Program {
         // Cache uniform locations
 
         let numUniforms: number = this._gl.getProgramParameter(this._program, this._gl.ACTIVE_UNIFORMS);
+        console.log("Uniforms: ", numUniforms, this)
         for (let i: number = 0; i < numUniforms; i++) {
             let info: WebGLActiveInfo | null = this._gl.getActiveUniform(this._program, i);
             if (info === null) {
@@ -41,6 +42,8 @@ export class Program {
             if (location === null) {
                 continue;
             }
+
+            console.log("Uniform: ", info.name, location)
 
             this._uniforms.set(info.name, location);
         }
@@ -71,6 +74,9 @@ export class Program {
         }
 
         switch (type) {
+            case this._gl.INT:
+                this._gl.uniform1i(location, data[0]);
+                break;
             case this._gl.FLOAT:
                 this._gl.uniform1f(location, data[0]);
                 break;
@@ -83,6 +89,8 @@ export class Program {
             case this._gl.FLOAT_VEC4:
                 this._gl.uniform4f(location, data[0], data[1], data[2], data[3]);
                 break;
+            default:
+                throw new Error(`Unsupported uniform type ${type}`);
         }
     }
 

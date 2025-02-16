@@ -18,9 +18,12 @@ export class FBO {
 
         this._framebuffer = this._gl.createFramebuffer();
         this._texture = this._gl.createTexture();
+        if (hasDepth) {
+            this._depthBuffer = this._gl.createRenderbuffer();
+        }
         
 
-        if (this._framebuffer === null || this._texture === null || this._depthBuffer === null) {
+        if (this._framebuffer === null || this._texture === null || (this._depthBuffer === null && hasDepth)) {
             throw new Error('Failed to create framebuffer, texture, or depth buffer')
         }
 
@@ -34,8 +37,7 @@ export class FBO {
         this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, wrapping);
         this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, this._texture, 0);
 
-        if (hasDepth) {
-            this._depthBuffer = this._gl.createRenderbuffer();
+        if (hasDepth) {   
             this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._depthBuffer);    
             this._gl.renderbufferStorage(this._gl.RENDERBUFFER, this._gl.DEPTH_COMPONENT16, this._width, this._height);
             this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.RENDERBUFFER, this._depthBuffer);
@@ -77,5 +79,36 @@ export class FBO {
         }
        
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
+    }
+}
+
+export class DoublesidedFBO {
+    private read: FBO;
+    private write: FBO;
+    constructor(gl: WebGL2RenderingContext, width: number, height: number,
+        sampling: number = gl.LINEAR, wrapping: number = gl.CLAMP_TO_EDGE, 
+        format: number = gl.RGBA, internalFormat: number = gl.RGBA, 
+        type: number = gl.UNSIGNED_BYTE, hasDepth: boolean = true) {
+
+        this.read = new FBO(gl, width, height, sampling, wrapping, format, internalFormat, type, hasDepth);
+        this.write = new FBO(gl, width, height, sampling, wrapping, format, internalFormat, type, hasDepth);
+    }
+
+    public bindReadToTexture(index: number): number {
+        return this.read.attach(index);
+    }
+
+    public bindWriteAsTarget() {
+        this.write.bindAsTarget();
+    }
+
+    public unbind() {
+        this.write.unbind();
+    }
+
+    public swap() {
+        let temp = this.read;
+        this.read = this.write;
+        this.write = temp;
     }
 }
