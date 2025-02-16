@@ -28,6 +28,6 @@ export class Camera {
 
     public setPerspectiveMatrix(fov: number, aspect: number, near: number, far: number) {
         this._projectionMatrix = Matrix4.IDENTITY.clone().perspective({fovy: fov, aspect, near, far})
-        this._viewMatrix = Matrix4.IDENTITY.clone().lookAt({eye: [5, 0, 0], center: [0, 0, 0], up: [0, 1, 0]})
+        this._viewMatrix = Matrix4.IDENTITY.clone().lookAt({eye: [0, 0, 5], center: [0, 0, 0], up: [0, 1, 0]})
     }
 }
