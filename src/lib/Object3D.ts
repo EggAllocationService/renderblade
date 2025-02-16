@@ -80,7 +80,7 @@ export class Object3D implements Drawable {
         return Matrix4.IDENTITY.clone().translate(this._position).scale(this._scale).rotateXYZ(this._rotation);
     }
 
-    public draw(gl: WebGL2RenderingContext, projectionMatrix: Matrix4, viewMatrix: Matrix4): void {
+    public draw(_: WebGL2RenderingContext, projectionMatrix: Matrix4, viewMatrix: Matrix4): void {
         this._gl.bindVertexArray(this._vao);
         this._material.use();
         this._material.setUniformMatrix('u_projectionMatrix', projectionMatrix);

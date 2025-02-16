@@ -1,4 +1,4 @@
-import { DoublesidedFBO, FBO } from "./FBO";
+import { DoublesidedFBO } from "./FBO";
 import Drawable from "./interface/Drawable";
 import { Matrix4 } from "@math.gl/core";
 import { PostEffect } from "./PostEffect";
