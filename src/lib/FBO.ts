@@ -3,7 +3,7 @@ export class FBO {
     private _framebuffer: WebGLFramebuffer | null = null;
     private _hasDepth: boolean = true;
     private _texture: WebGLTexture | null = null;
-    private _depthBuffer: WebGLRenderbuffer | null = null;
+    private _depthBuffer: WebGLTexture | null = null;
     private _width: number;
     private _height: number;
 
@@ -19,7 +19,7 @@ export class FBO {
         this._framebuffer = this._gl.createFramebuffer();
         this._texture = this._gl.createTexture();
         if (hasDepth) {
-            this._depthBuffer = this._gl.createRenderbuffer();
+            this._depthBuffer = this._gl.createTexture();
         }
         
 
@@ -38,12 +38,20 @@ export class FBO {
         this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, this._texture, 0);
 
         if (hasDepth) {   
-            this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._depthBuffer);    
-            this._gl.renderbufferStorage(this._gl.RENDERBUFFER, this._gl.DEPTH_COMPONENT16, this._width, this._height);
-            this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.RENDERBUFFER, this._depthBuffer);
+            this._gl.bindTexture(this._gl.TEXTURE_2D, this._depthBuffer);    
+            this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.DEPTH_COMPONENT24, this._width, this._height, 0, this._gl.DEPTH_COMPONENT, this._gl.UNSIGNED_INT, null);
+            this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, this._gl.NEAREST);
+            this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, this._gl.NEAREST);
+            this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.TEXTURE_2D, this._depthBuffer, 0);
+        }
+        // check framebuffer status
+        if (this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER) !== this._gl.FRAMEBUFFER_COMPLETE) {
+            throw new Error('Framebuffer is not complete');
         }
 
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
+
+        
     }
 
     public bindAsTarget() {
@@ -59,6 +67,11 @@ export class FBO {
     public attach(index: number): number {
         this._gl.activeTexture(this._gl.TEXTURE0 + index);
         this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
+        return index;
+    }
+    public attachDepth(index: number): number {
+        this._gl.activeTexture(this._gl.TEXTURE0 + index);
+        this._gl.bindTexture(this._gl.TEXTURE_2D, this._depthBuffer);
         return index;
     }
 
@@ -96,6 +109,10 @@ export class DoublesidedFBO {
 
     public bindReadToTexture(index: number): number {
         return this.read.attach(index);
+    }
+
+    public bindReadDepthToTexture(index: number): number {
+        return this.read.attachDepth(index);
     }
 
     public bindWriteAsTarget() {

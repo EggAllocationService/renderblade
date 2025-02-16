@@ -100,6 +100,7 @@ export class Program {
         this._gl.useProgram(this._program);
         //console.log(this._uniformValues);
         for (var key of this._uniformValues.keys()) {
+            if (!this._uniforms.has(key)) continue;
             this.setUniformInternal(key, this._uniformValues.get(key)!.type, this._uniformValues.get(key)!.data);
         }
     }

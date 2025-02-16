@@ -61,15 +61,19 @@ export class Camera {
         this._projectionMatrix = Matrix4.IDENTITY.clone().perspective({fovy: fov, aspect, near, far})
         this._viewMatrix = Matrix4.IDENTITY.clone().lookAt({eye: [0, 0, 5], center: [0, 0, 0], up: [0, 1, 0]})
     }
+
     public postStart() {
         this._postBuffer.swap();
     }
+
     public postPass(program: PostEffect) {
         program.use();
         this._gl.bindVertexArray(this._postVao);
         this._postBuffer.bindWriteAsTarget();
         this._postBuffer.bindReadToTexture(0);
+        this._postBuffer.bindReadDepthToTexture(1);
         program.setUniform('uColor', this._gl.INT, 0);
+        program.setUniform('uDepth', this._gl.INT, 1);
         this._gl.drawArrays(this._gl.TRIANGLE_STRIP, 0, 4);
 
         this._postBuffer.unbind();
