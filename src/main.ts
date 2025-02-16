@@ -1,24 +1,34 @@
 import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import cubeObj from './Cube.obj?raw'
+import { Camera } from './lib/Camera';
+import { Object3D } from './lib/Object3D';
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+const app = document.getElementById('app') as HTMLDivElement;
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+const canvas = document.createElement('canvas');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+app.appendChild(canvas);
+
+const gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
+const camera = new Camera(gl);
+camera.setPerspectiveMatrix(Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
+
+const cube = new Object3D(gl, cubeObj);
+console.log(cube);
+
+let rotationDeg = 0;
+
+function render() {
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    rotationDeg += 1;
+    rotationDeg %= 360;
+
+    cube.setRotation(0, rotationDeg * Math.PI / 180, 0);
+    camera.draw(cube);
+    requestAnimationFrame(render);
+}
+
+render();
