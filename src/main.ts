@@ -32,7 +32,21 @@ gl.enable(gl.DEPTH_TEST);
 gl.enable(gl.CULL_FACE)
 gl.clearColor(1.0, 1.0, 1.0, 1.0);
 
+var avg: number[] = new Array(100).fill(0);
+var i = 0;
+
+const fpsEl = document.createElement('div');
+fpsEl.style.position = 'absolute';
+fpsEl.style.top = '0';
+fpsEl.style.left = '0';
+fpsEl.style.color = 'white';
+fpsEl.style.backgroundColor = 'black';
+fpsEl.style.padding = '5px';
+fpsEl.style.zIndex = '1000';
+app.appendChild(fpsEl);
+
 function render() {
+    performance.mark('renderStart');
     camera.clear();
     rotationDeg += 1;
     rotationDeg %= 360;
@@ -48,7 +62,15 @@ function render() {
     camera.postStart();
     camera.postPass(outlineEffect);
     camera.postFinished();
-
+    performance.mark('renderEnd');
+    const time = performance.measure('render', 'renderStart', 'renderEnd');
+    avg[i++] = time.duration;
+    i %= 100;
+    if (i === 0) {
+        const averageFrameTime = avg.reduce((a, b) => a + b) / avg.length;
+        const fps = 1000 / averageFrameTime;
+        fpsEl.innerText = `FPS: ${fps.toFixed(2)}`;
+    }
     requestAnimationFrame(render);
 }
 
