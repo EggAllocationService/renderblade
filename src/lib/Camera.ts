@@ -18,6 +18,13 @@ export class Camera {
 
     private _frameDrawnTris = 0;
 
+    private _cameraData = {
+        fov: 60,
+        aspect: 1,
+        near: 0.1,
+        far: 100
+    }
+
     constructor(gl: WebGL2RenderingContext) {
         this._gl = gl
         this._postBuffer = new DoublesidedFBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.NEAREST, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, false)
@@ -56,6 +63,14 @@ export class Camera {
 
     }
 
+    public resize(width: number, height: number) {
+        this._postBuffer.reallocate(width, height);
+        this._renderbuffer.reallocate(width, height);
+
+        this._cameraData.aspect = width / height;
+        this.regenerateProjectionMatrix();
+    }
+
     public draw(drawable: Drawable) {
         // This is the only line that is different from the Drawable interface
         if (this._enablePostProcessing) {
@@ -64,8 +79,17 @@ export class Camera {
         this._frameDrawnTris += drawable.draw(this._gl, this._projectionMatrix, this._viewMatrix);
     }
 
+    private regenerateProjectionMatrix() {
+        this._projectionMatrix = Matrix4.IDENTITY.clone().perspective({fovy: this._cameraData.fov, aspect: this._cameraData.aspect, near: this._cameraData.near, far: this._cameraData.far})
+    }
+
     public setPerspectiveMatrix(fov: number, aspect: number, near: number, far: number) {
-        this._projectionMatrix = Matrix4.IDENTITY.clone().perspective({fovy: fov, aspect, near, far})
+        this._cameraData.fov = fov;
+        this._cameraData.aspect = aspect;
+        this._cameraData.near = near;
+        this._cameraData.far = far;
+
+        this.regenerateProjectionMatrix();
         this._viewMatrix = Matrix4.IDENTITY.clone().lookAt({eye: [0, 0, 5], center: [0, 0, 0], up: [0, 1, 0]})
     }
 

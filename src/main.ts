@@ -79,6 +79,12 @@ async function main() {
     const camera = new Camera(gl);
     camera.setPerspectiveMatrix(Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
 
+    window.onresize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        camera.resize(canvas.width, canvas.height);
+    }
+
     const sphere = new Object3D(gl, sphereObj);
     const teapot = new Object3D(gl, teapotObj);
     const outlineEffect = new PostEffect(gl, outlineFs);

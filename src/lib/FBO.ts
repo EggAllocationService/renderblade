@@ -89,9 +89,9 @@ export class FBO {
         this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, this._texture, 0);
 
         if (this._hasDepth) {
-            this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._depthBuffer);
-            this._gl.renderbufferStorage(this._gl.RENDERBUFFER, this._gl.DEPTH_COMPONENT16, this._width, this._height);
-            this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.RENDERBUFFER, this._depthBuffer);
+            this._gl.bindTexture(this._gl.TEXTURE_2D, this._depthBuffer);
+            this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.DEPTH_COMPONENT24, this._width, this._height, 0, this._gl.DEPTH_COMPONENT, this._gl.UNSIGNED_INT, null);
+            this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.TEXTURE_2D, this._depthBuffer, 0);
         }
        
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
@@ -107,7 +107,7 @@ export class FBO {
         gl.bindTexture(gl.TEXTURE_2D, result._texture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, i);
         gl.generateMipmap(gl.TEXTURE_2D);
-        
+
         gl.bindTexture(gl.TEXTURE_2D, null);
 
         return result;
@@ -140,6 +140,11 @@ export class DoublesidedFBO {
 
     public unbind() {
         this.write.unbind();
+    }
+
+    public reallocate(width: number, height: number) {
+        this.read.reallocate(width, height);
+        this.write.reallocate(width, height);
     }
 
     public swap() {
