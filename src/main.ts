@@ -10,7 +10,7 @@ import stippleFs from './stipple.frag?raw'
 import { fetchTexture } from './lib/util';
 import bluenoise from './textures/bluenoise.png';
 import paper from './textures/paper.png';
-import { Material } from './lib/Material';
+import { Material, TextureTarget } from './lib/Material';
 
 import baseVs from "./lib/shaders/base.vert?raw";
 import litFs from "./lit.frag?raw";
@@ -104,12 +104,13 @@ async function main() {
 
     camera.setPostProcessing(true);
 
-    const invertBuffer = camera.createExtraBuffer("invert");
+    const invertBuffer = camera.createExtraBuffer("invert", TextureTarget.DEPTH);
     const monkey = new Object3D(gl, monkeyObj);
     const invertMaterial = new Material(gl, baseVs, colorFs);
     invertMaterial.setUniform("uColor", gl.FLOAT_VEC3, 1, 1, 1);
     monkey.setMaterial(invertMaterial)
-    monkey.setScale(1.5, 1.5, 1.5);
+    monkey.setScale(2.5, 2.5, 2.5);
+    monkey.setPosition(0, 0, -5);
     var invertEffect = new PostEffect(gl, invertFs);
 
     console.log(camera);
@@ -165,7 +166,7 @@ async function main() {
             camera.postPass(outlineEffect);
         }
         if (state.invertMask) {
-            invertEffect.setTexture("uMask", invertBuffer);
+            invertEffect.setTexture("uMask", invertBuffer, TextureTarget.DEPTH);
             camera.postPass(invertEffect);
         }
 

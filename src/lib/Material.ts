@@ -31,6 +31,6 @@ export class Material extends Program {
 }
 
 export enum TextureTarget {
-    COLOR = 0,
-    DEPTH = 1
+    COLOR = 1,
+    DEPTH = 2
 }

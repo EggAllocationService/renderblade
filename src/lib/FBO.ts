@@ -2,6 +2,7 @@ export class FBO {
     private _gl: WebGL2RenderingContext;
     private _framebuffer: WebGLFramebuffer | null = null;
     private _hasDepth: boolean;
+    private _hasColor: boolean;
     private _texture: WebGLTexture | null = null;
     private _depthBuffer: WebGLTexture | null = null;
     private _width: number;
@@ -11,33 +12,42 @@ export class FBO {
     constructor(gl: WebGL2RenderingContext, width: number, height: number, 
         sampling: number = gl.LINEAR, wrapping: number = gl.CLAMP_TO_EDGE, 
         format: number = gl.RGBA, internalFormat: number = gl.RGBA, 
-        type: number = gl.UNSIGNED_BYTE, hasDepth: boolean = false) {
+        type: number = gl.UNSIGNED_BYTE, hasDepth: boolean = true, hasColor: boolean = true) {
+
+        if (!hasColor && !hasDepth) {
+            throw new Error('Framebuffer must have at least one buffer');
+        }
 
         this._gl = gl;
         this._width = width;
         this._height = height;
         this._hasDepth = hasDepth;
+        this._hasColor = hasColor;
 
         this._framebuffer = this._gl.createFramebuffer();
-        this._texture = this._gl.createTexture();
+        if (hasColor) {
+            this._texture = this._gl.createTexture();
+        }
         if (hasDepth) {
             this._depthBuffer = this._gl.createTexture();
         }
         
 
-        if (this._framebuffer === null || this._texture === null || (this._depthBuffer === null && hasDepth)) {
+        if (this._framebuffer === null || (this._texture === null && hasColor) || (this._depthBuffer === null && hasDepth)) {
             throw new Error('Failed to create framebuffer, texture, or depth buffer')
         }
 
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._framebuffer);
 
-        this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
-        this._gl.texImage2D(this._gl.TEXTURE_2D, 0, format, this._width, this._height, 0, internalFormat, type, null);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, sampling);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, sampling);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, wrapping);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, wrapping);
-        this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, this._texture, 0);
+        if (hasColor) {
+            this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
+            this._gl.texImage2D(this._gl.TEXTURE_2D, 0, format, this._width, this._height, 0, internalFormat, type, null);
+            this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, sampling);
+            this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, sampling);
+            this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, wrapping);
+            this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, wrapping);
+            this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, this._texture, 0);
+        }
 
         if (hasDepth) {   
             this._gl.bindTexture(this._gl.TEXTURE_2D, this._depthBuffer);    
@@ -79,11 +89,17 @@ export class FBO {
     }
 
     public attach(index: number): number {
+        if (!this._hasColor) {
+            throw new Error('Framebuffer does not have a color buffer');
+        }
         this._gl.activeTexture(this._gl.TEXTURE0 + index);
         this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
         return index;
     }
     public attachDepth(index: number): number {
+        if (!this._hasDepth) {
+            throw new Error('Framebuffer does not have a depth buffer');
+        }
         this._gl.activeTexture(this._gl.TEXTURE0 + index);
         this._gl.bindTexture(this._gl.TEXTURE_2D, this._depthBuffer);
         return index;
@@ -93,11 +109,13 @@ export class FBO {
         this._width = width;
         this._height = height;
 
-        this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
-        this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._width, this._height, 0, this._gl.RGBA, this._gl.UNSIGNED_BYTE, null);
-
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._framebuffer);
-        this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, this._texture, 0);
+
+        if (this._hasColor) {
+            this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
+            this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._width, this._height, 0, this._gl.RGBA, this._gl.UNSIGNED_BYTE, null);
+            this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, this._texture, 0);
+        }
 
         if (this._hasDepth) {
             this._gl.bindTexture(this._gl.TEXTURE_2D, this._depthBuffer);
@@ -113,7 +131,7 @@ export class FBO {
             throw new Error('Image is not loaded');
         }
 
-        var result = new FBO(gl, i.width, i.height, gl.LINEAR, gl.REPEAT);
+        var result = new FBO(gl, i.width, i.height, gl.LINEAR, gl.REPEAT, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, false, true);
 
         gl.bindTexture(gl.TEXTURE_2D, result._texture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, i);
