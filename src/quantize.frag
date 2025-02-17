@@ -6,12 +6,10 @@ in vec2 v_uv;
 
 out vec4 color;
 
+const float colors = 4.0;
+
 void main() {
-    vec4 texel = texture(uColor, v_uv);
-    float intensity = (texel.r + texel.g + texel.b) / 3.0;
-    if (intensity > 0.001) {
-        color = vec4(1.0, 1.0, 1.0, 1.0);
-    } else {
-        color = vec4(0.0, 0.0, 0.0, 1.0);
-    }
+    float intensity = texture(uColor, v_uv).x;
+    intensity = floor(intensity * colors) / colors;
+    color = vec4(intensity, intensity, intensity, 1.0);
 }
