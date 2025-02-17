@@ -1,4 +1,4 @@
-import { Matrix4 } from "@math.gl/core";
+
 
 export class Program {
     private _vsText: string;
