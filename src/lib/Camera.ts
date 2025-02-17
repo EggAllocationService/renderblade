@@ -82,7 +82,14 @@ export class Camera {
         // This is the only line that is different from the Drawable interface
         if (this._enablePostProcessing) {
             target.bindAsTarget();
-        }
+            if (!target.hasColor) {
+                this._gl.colorMask(false, false, false, false);
+            } else {
+                this._gl.colorMask(true, true, true, true);
+            }
+            this._gl.depthMask(target.hasDepth)
+        } 
+        
         this._frameDrawnTris += drawable.draw(this._gl, this._projectionMatrix, this._viewMatrix);
     }
 
@@ -110,6 +117,8 @@ export class Camera {
 
     public postStart() {
         // copy rendered color to post buffer
+        this._gl.colorMask(true, true, true, true);
+        this._gl.depthMask(false);
         this._gl.bindVertexArray(this._postVao);
         this._postBuffer.bindWriteAsTarget();
         this._gl.clear(this._gl.COLOR_BUFFER_BIT)
@@ -135,6 +144,7 @@ export class Camera {
     }
 
     public postFinished() {
+        this._gl.depthMask(true);
         this._postBuffer!.unbind();
         this._postCopyProgram.use();
         this._gl.bindVertexArray(this._postVao);

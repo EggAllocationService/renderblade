@@ -1,8 +1,8 @@
 export class FBO {
     private _gl: WebGL2RenderingContext;
     private _framebuffer: WebGLFramebuffer | null = null;
-    private _hasDepth: boolean;
-    private _hasColor: boolean;
+    public hasDepth: boolean;
+    public hasColor: boolean;
     private _texture: WebGLTexture | null = null;
     private _depthBuffer: WebGLTexture | null = null;
     private _width: number;
@@ -21,8 +21,8 @@ export class FBO {
         this._gl = gl;
         this._width = width;
         this._height = height;
-        this._hasDepth = hasDepth;
-        this._hasColor = hasColor;
+        this.hasDepth = hasDepth;
+        this.hasColor = hasColor;
 
         this._framebuffer = this._gl.createFramebuffer();
         if (hasColor) {
@@ -89,7 +89,7 @@ export class FBO {
     }
 
     public attach(index: number): number {
-        if (!this._hasColor) {
+        if (!this.hasColor) {
             throw new Error('Framebuffer does not have a color buffer');
         }
         this._gl.activeTexture(this._gl.TEXTURE0 + index);
@@ -97,7 +97,7 @@ export class FBO {
         return index;
     }
     public attachDepth(index: number): number {
-        if (!this._hasDepth) {
+        if (!this.hasDepth) {
             throw new Error('Framebuffer does not have a depth buffer');
         }
         this._gl.activeTexture(this._gl.TEXTURE0 + index);
@@ -111,13 +111,13 @@ export class FBO {
 
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._framebuffer);
 
-        if (this._hasColor) {
+        if (this.hasColor) {
             this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
             this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._width, this._height, 0, this._gl.RGBA, this._gl.UNSIGNED_BYTE, null);
             this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, this._texture, 0);
         }
 
-        if (this._hasDepth) {
+        if (this.hasDepth) {
             this._gl.bindTexture(this._gl.TEXTURE_2D, this._depthBuffer);
             this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.DEPTH_COMPONENT24, this._width, this._height, 0, this._gl.DEPTH_COMPONENT, this._gl.UNSIGNED_INT, null);
             this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.TEXTURE_2D, this._depthBuffer, 0);
