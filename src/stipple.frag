@@ -17,7 +17,7 @@ void main() {
     vec2 ratio = vec2(textureSize(uColor, 0)) / vec2(textureSize(uNoise, 0));
     color = texture(uColor, v_uv);
     float noise = texture(uNoise, v_uv * ratio * stippleScale).x * noiseScale;
-    vec4 bg = texture(uBg, v_uv * ratio * 2.0);
+    vec4 bg = texture(uBg, v_uv * ratio * 8.0);
 
     if (color.r <= noise) {
         color = vec4(0.1529, 0.1333, 0.1216, 1.0) * bg;

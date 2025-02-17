@@ -8,7 +8,7 @@ import outlineFs from './outline.frag?raw'
 import stippleFs from './stipple.frag?raw'
 import { fetchTexture } from './lib/util';
 import bluenoise from './textures/bluenoise.png';
-import paper from './textures/paper.jpg';
+import paper from './textures/paper.png';
 import { Material } from './lib/Material';
 
 import baseVs from "./lib/shaders/base.vert?raw";
@@ -22,15 +22,21 @@ async function main() {
         stipple: false,
         stippleScale: 0.8,
         noiseScale: 0.9,
-        colorDrain: 0.2
+        colorDrain: 0.2,
+        frameTime: 0,
+        triangles: 0,
+        degreesPerSecond: 20
     };
     const pane = new Pane({
-        expanded:true
+        expanded:true,
+        title: "Debug"
     });
-    pane.addBinding(state, 'outline');
-    pane.addBinding(state, 'stipple');
+    pane.addBinding(state, 'degreesPerSecond', {min: 0, max: 360}).label = "Rotation Speed";
+    const postProcessFolder = pane.addFolder({title: 'Post Processing', expanded: true});
+    postProcessFolder.addBinding(state, 'outline');
+    postProcessFolder.addBinding(state, 'stipple');
     const materialFolder = pane.addFolder({title: 'Material', expanded: true});
-    materialFolder.addBinding(state, 'colorDrain', {min: 0, max: 1})
+    materialFolder.addBinding(state, 'colorDrain', {min: -1, max: 1})
         .label = 'Color Drain';
 
     const stippleFolder = pane.addFolder({title: 'Stipple', expanded: true});
@@ -38,6 +44,20 @@ async function main() {
         .label = 'Stipple Texture Scale';
     stippleFolder.addBinding(state, 'noiseScale', {min: 0.1, max: 2})
         .label = 'Noise Threshold Scale';
+
+    const statsFolder = pane.addFolder({title: 'Stats', expanded: true});
+    statsFolder.addBinding(state, 'frameTime', {
+        readonly: true,
+        label: 'Frame Time',
+        view: 'graph',
+        min: 0,
+        max: 16
+    });
+    statsFolder.addBinding(state, 'triangles', {
+        readonly: true,
+        label: 'Triangles',
+        format: (value: number) => Math.floor(value).toString()
+    });
 
     
     const app = document.getElementById('app') as HTMLDivElement;
@@ -97,13 +117,18 @@ async function main() {
     console.log(stippleEffect);
 
     teapot.setScale(0.3, 0.3, 0.3);
+
+    var last = performance.now();
     function render() {
+        var dt = performance.now() - last;
+        
         performance.mark('renderStart');
         litMaterial.setUniform('uColorDrain', gl.FLOAT, state.colorDrain);
         camera.clear();
-        rotationDeg += 1;
-        rotationDeg %= 360;
-
+        rotationDeg += state.degreesPerSecond * dt / 1000;
+        if (rotationDeg > 360) {
+            rotationDeg = 0;
+        }
 
         teapot.setRotation(0, -1 * rotationDeg * Math.PI / 180, Math.PI / 10);
         sphere.setRotation(0, -1 * rotationDeg * Math.PI / 180, rotationDeg * Math.PI / 180);
@@ -127,9 +152,10 @@ async function main() {
         i %= 100;
         if (i === 0) {
             const averageFrameTime = avg.reduce((a, b) => a + b) / avg.length;
-            const fps = 1000 / averageFrameTime;
-            fpsEl.innerText = `FPS: ${fps.toFixed(2)}\nTriangles: ${camera.getDrawnTris()}`;
+            state.frameTime = averageFrameTime;
+            state.triangles = camera.getDrawnTris();
         }
+        last = performance.now();
         requestAnimationFrame(render);
     }
     render();
