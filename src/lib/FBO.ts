@@ -6,6 +6,7 @@ export class FBO {
     private _depthBuffer: WebGLTexture | null = null;
     private _width: number;
     private _height: number;
+    private _clearColor = [0, 0, 0, 1];
 
     constructor(gl: WebGL2RenderingContext, width: number, height: number, 
         sampling: number = gl.LINEAR, wrapping: number = gl.CLAMP_TO_EDGE, 
@@ -55,6 +56,16 @@ export class FBO {
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
 
         
+    }
+
+    public clear() {
+        this.bindAsTarget();
+        this._gl.clearColor(this._clearColor[0], this._clearColor[1], this._clearColor[2], this._clearColor[3]);
+        this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
+    }
+
+    public setClearColor(r: number, g: number, b: number, a: number) {
+        this._clearColor = [r, g, b, a];
     }
 
     public bindAsTarget() {
@@ -151,5 +162,13 @@ export class DoublesidedFBO {
         let temp = this.read;
         this.read = this.write;
         this.write = temp;
+    }
+
+    public getRead(): FBO {
+        return this.read;
+    }
+
+    public getWrite(): FBO {
+        return this.write;
     }
 }

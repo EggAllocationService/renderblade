@@ -3,6 +3,7 @@ import Drawable from "./interface/Drawable";
 import { Matrix4 } from "@math.gl/core";
 import { PostEffect } from "./PostEffect";
 import copyFs from './shaders/copy.frag?raw'
+import { TextureTarget } from "./Material";
 
 export class Camera {
     private _gl: WebGL2RenderingContext;
@@ -15,6 +16,8 @@ export class Camera {
 
     private _postVao: WebGLVertexArrayObject;
     private _postCopyProgram: PostEffect;
+
+    private _extraBuffers: Map<string, FBO> = new Map<string, FBO>();
 
     private _frameDrawnTris = 0;
 
@@ -48,19 +51,19 @@ export class Camera {
     }
 
     public clear() {
-        this._renderbuffer.bindAsTarget();
-        this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT)
-        this._postBuffer.bindWriteAsTarget();
-        this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT)
-        this._postBuffer.unbind();
+        this._renderbuffer.clear();
+        this._postBuffer.getRead().clear();
+        this._postBuffer.getWrite().clear();
 
-        this._postBuffer.swap();
-        this._postBuffer.bindWriteAsTarget();
-        this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT)
-        this._postBuffer.unbind();
+        this._renderbuffer.unbind();
 
         this._frameDrawnTris = 0;
+    }
 
+    public clearColor(r: number, g: number, b: number, a: number) {
+        this._renderbuffer.setClearColor(r, g, b, a);
+        this._postBuffer.getRead().setClearColor(r, g, b, a);
+        this._postBuffer.getWrite().setClearColor(r, g, b, a);
     }
 
     public resize(width: number, height: number) {
@@ -69,12 +72,16 @@ export class Camera {
 
         this._cameraData.aspect = width / height;
         this.regenerateProjectionMatrix();
+
+        for (let buffer of this._extraBuffers.values()) {
+            buffer.reallocate(width, height);
+        }
     }
 
-    public draw(drawable: Drawable) {
+    public draw(drawable: Drawable, target: FBO = this._renderbuffer) {
         // This is the only line that is different from the Drawable interface
         if (this._enablePostProcessing) {
-            this._renderbuffer.bindAsTarget();
+            target.bindAsTarget();
         }
         this._frameDrawnTris += drawable.draw(this._gl, this._projectionMatrix, this._viewMatrix);
     }
@@ -93,6 +100,12 @@ export class Camera {
         this._viewMatrix = Matrix4.IDENTITY.clone().lookAt({eye: [0, 0, 5], center: [0, 0, 0], up: [0, 1, 0]})
     }
 
+    public createExtraBuffer(name: string): FBO {
+        let buffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, true);
+        this._extraBuffers.set(name, buffer);
+        return buffer;
+    }
+
     public postStart() {
         // copy rendered color to post buffer
         this._gl.bindVertexArray(this._postVao);
@@ -107,13 +120,12 @@ export class Camera {
     }
 
     public postPass(program: PostEffect) {
+
+        program.setTexture("uColor", this._postBuffer.getRead());
+        program.setTexture("uDepth", this._renderbuffer, TextureTarget.DEPTH);
         program.use();
         this._gl.bindVertexArray(this._postVao);
         this._postBuffer.bindWriteAsTarget();
-        this._postBuffer.bindReadToTexture(0);
-        this._renderbuffer.attachDepth(1);
-        program.setUniform('uColor', this._gl.INT, 0);
-        program.setUniform('uDepth', this._gl.INT, 1);
         this._gl.drawArrays(this._gl.TRIANGLE_STRIP, 0, 4);
 
         this._postBuffer.unbind();

@@ -6,23 +6,31 @@ export class Material extends Program {
         super(gl, vsText, fsText);
     }
 
-    private _textures: Map<string, FBO> = new Map<string, FBO>();
+    private _textures: Map<string, {buffer: FBO, target: TextureTarget}> = new Map();
 
-    public setTexture(name: string, texture: FBO): void {
-        this._textures.set(name, texture);
+    public setTexture(name: string, texture: FBO, target: TextureTarget = TextureTarget.COLOR): void {
+        this._textures.set(name, {buffer: texture, target});
     }
 
     public override use(): void {
-        var i = 2;
+        var i = 0;
         for (let [name, texture] of this._textures) {
             if (this._uniforms.get(name) === undefined) {
-                console.warn(`Texture uniform ${name} not found in program`);
                 continue;
             }
-            texture.attach(i);
+            if (texture.target === TextureTarget.COLOR) {
+                texture.buffer.attach(i);
+            } else {
+                texture.buffer.attachDepth(i);
+            }
             this.setUniform(name, this._gl.INT, i);
             i++;
         }
         super.use();
     }
+}
+
+export enum TextureTarget {
+    COLOR = 0,
+    DEPTH = 1
 }
