@@ -2,6 +2,7 @@
 precision highp float;
 uniform sampler2D uColor;
 uniform sampler2D uNoise;
+uniform sampler2D uBg;
 
 in vec2 v_uv;
 
@@ -12,11 +13,13 @@ void main() {
     // tile uNoise across the screen
     vec2 ratio = vec2(textureSize(uColor, 0)) / vec2(textureSize(uNoise, 0));
     color = texture(uColor, v_uv);
-    float noise = texture(uNoise, v_uv * ratio).x - 0.08;
-    if (color.r < noise) {
-        color = vec4(0.0, 0.0, 0.0, 1.0);
+    float noise = texture(uNoise, v_uv * ratio * 0.8).x * 0.9;
+    vec4 bg = texture(uBg, v_uv * ratio * 2.0);
+
+    if (color.r <= noise) {
+        color = vec4(0.1529, 0.1333, 0.1216, 1.0) * bg;
     } else {
-        color = vec4(1.0, 1.0, 1.0, 1.0);
+        color = bg;
     }
 
 }

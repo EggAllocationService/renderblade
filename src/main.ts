@@ -7,7 +7,8 @@ import { PostEffect } from './lib/PostEffect';
 import outlineFs from './outline.frag?raw'
 import stippleFs from './stipple.frag?raw'
 import { fetchTexture } from './lib/util';
-import bluenoise from './bluenoise.png';
+import bluenoise from './textures/bluenoise.png';
+import paper from './textures/paper.jpg';
 import { Material } from './lib/Material';
 
 import baseVs from "./lib/shaders/base.vert?raw";
@@ -36,8 +37,10 @@ async function main() {
     teapot.setMaterial(litMaterial);
 
     const blueNoise = await fetchTexture(gl, bluenoise);
+    const paperTexture = await fetchTexture(gl, paper);
 
     stippleEffect.setTexture("uNoise", blueNoise);
+    stippleEffect.setTexture("uBg", paperTexture);
 
     camera.setPostProcessing(true);
 
