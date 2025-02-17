@@ -25,7 +25,8 @@ async function main() {
         colorDrain: 0.2,
         frameTime: 0,
         triangles: 0,
-        degreesPerSecond: 20
+        degreesPerSecond: 20,
+        inkColor: {r: 0.1529, g: 0.1333, b: 0.1216}
     };
     const pane = new Pane({
         expanded:true,
@@ -44,6 +45,12 @@ async function main() {
         .label = 'Stipple Texture Scale';
     stippleFolder.addBinding(state, 'noiseScale', {min: 0.1, max: 2})
         .label = 'Noise Threshold Scale';
+    stippleFolder.addBinding(state, 'inkColor', {
+        label: 'Ink Color', 
+        color: {
+            type: 'float'
+        }
+    });
 
     const statsFolder = pane.addFolder({title: 'Stats', expanded: true});
     statsFolder.addBinding(state, 'frameTime', {
@@ -99,17 +106,6 @@ async function main() {
     var avg: number[] = new Array(100).fill(0);
     var i = 0;
 
-    const fpsEl = document.createElement('div');
-    fpsEl.style.position = 'absolute';
-    fpsEl.style.top = '0';
-    fpsEl.style.left = '0';
-    fpsEl.style.color = 'white';
-    fpsEl.style.backgroundColor = 'black';
-    fpsEl.style.padding = '5px';
-    fpsEl.style.zIndex = '1000';
-    app.appendChild(fpsEl);
-
-
     sphere.setPosition(-2, 0.4, -2);
     sphere.setScale(1, 1, 1);
     teapot.setPosition(2, 0, -2);
@@ -140,9 +136,11 @@ async function main() {
         if (state.stipple) {
             stippleEffect.setUniform("noiseScale", gl.FLOAT, state.noiseScale);
             stippleEffect.setUniform("stippleScale", gl.FLOAT, state.stippleScale);
+            stippleEffect.setUniform("inkColor", gl.FLOAT_VEC3, state.inkColor.r, state.inkColor.g, state.inkColor.b);
             camera.postPass(stippleEffect);
         }
         if (state.outline) {
+            outlineEffect.setUniform("uOutlineColor", gl.FLOAT_VEC3, state.inkColor.r, state.inkColor.g, state.inkColor.b);
             camera.postPass(outlineEffect);
         }
         camera.postFinished();

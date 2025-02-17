@@ -10,6 +10,7 @@ out vec4 color;
 
 uniform float stippleScale;
 uniform float noiseScale;
+uniform vec3 inkColor;
 
 
 void main() {
@@ -20,7 +21,7 @@ void main() {
     vec4 bg = texture(uBg, v_uv * ratio * 8.0);
 
     if (color.r <= noise) {
-        color = vec4(0.1529, 0.1333, 0.1216, 1.0) * bg;
+        color = vec4(inkColor, 1.0) * bg;
     } else {
         color = bg;
     }

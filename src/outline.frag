@@ -2,6 +2,7 @@
 precision highp float;
 uniform sampler2D uColor;
 uniform sampler2D uDepth;
+uniform vec3 uOutlineColor;
 
 in vec2 v_uv;
 
@@ -30,6 +31,13 @@ void main() {
     float depth = texture(uDepth, v_uv).r;
     float linear = linearDepth(depth);
 
+    ivec2 resolution = textureSize(uDepth, 0);
+    ivec2 coord = ivec2(gl_FragCoord.xy);
+    if (coord.x == 0 || coord.y == 0 || coord.x == resolution.x - 1 || coord.y == resolution.y - 1) {
+        color = texture(uColor, v_uv);
+        return;
+    }
+
     float n = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(0, -1), 0).r);
     float ne = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(1, -1), 0).r);
     float e = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(1, 0), 0).r);
@@ -48,5 +56,6 @@ void main() {
     float edge_x = dot(sobel_x[0], surrounding[0]) + dot(sobel_x[1], surrounding[1]) + dot(sobel_x[2], surrounding[2]);
     float edge_y = dot(sobel_y[0], surrounding[0]) + dot(sobel_y[1], surrounding[1]) + dot(sobel_y[2], surrounding[2]);
     float edge = sqrt(edge_x * edge_x + edge_y * edge_y);
-    color = mix(texture(uColor, v_uv), vec4(0.0, 0.0, 0.0, 1.0), edge);
+    edge = min(1.0, edge);
+    color = mix(texture(uColor, v_uv), vec4(uOutlineColor, 1.0), edge);
 }
