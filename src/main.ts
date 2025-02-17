@@ -79,8 +79,9 @@ async function main() {
 
     const gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
     const camera = new Camera(gl);
+    
     camera.setPerspectiveMatrix(Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
-
+    
     window.onresize = () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -155,6 +156,7 @@ async function main() {
         }
 
         camera.postStart();
+        
         if (state.stipple) {
             stippleEffect.setUniform("noiseScale", gl.FLOAT, state.noiseScale);
             stippleEffect.setUniform("stippleScale", gl.FLOAT, state.stippleScale);

@@ -21,6 +21,8 @@ export class Camera {
 
     private _frameDrawnTris = 0;
 
+    private renderScale: number = 1;
+
     private _cameraData = {
         fov: 60,
         aspect: 1,
@@ -30,8 +32,8 @@ export class Camera {
 
     constructor(gl: WebGL2RenderingContext) {
         this._gl = gl
-        this._postBuffer = new DoublesidedFBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.NEAREST, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, false)
-        this._renderbuffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.NEAREST, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, true);
+        this._postBuffer = new DoublesidedFBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, false)
+        this._renderbuffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, true);
 
         this._postVao = gl.createVertexArray();
         gl.bindVertexArray(this._postVao);
@@ -48,6 +50,11 @@ export class Camera {
 
     public setPostProcessing(enable: boolean) {
         this._enablePostProcessing = enable
+    }
+
+    public setRenderScale(ssaa: number) {
+        this.renderScale = ssaa;
+        this.resize(this._gl.canvas.width, this._gl.canvas.height);
     }
 
     public clear() {
@@ -67,6 +74,8 @@ export class Camera {
     }
 
     public resize(width: number, height: number) {
+        width = Math.floor(width * this.renderScale);
+        height = Math.floor(height * this.renderScale);
         this._postBuffer.reallocate(width, height);
         this._renderbuffer.reallocate(width, height);
 
@@ -134,6 +143,7 @@ export class Camera {
 
         program.setTexture("uColor", this._postBuffer.getRead());
         program.setTexture("uDepth", this._renderbuffer, TextureTarget.DEPTH);
+        program.setUniform("uRenderScale", this._gl.FLOAT, this.renderScale);
         program.use();
         this._gl.bindVertexArray(this._postVao);
         this._postBuffer.bindWriteAsTarget();

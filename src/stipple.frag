@@ -11,6 +11,7 @@ out vec4 color;
 uniform float stippleScale;
 uniform float noiseScale;
 uniform vec3 inkColor;
+uniform float uRenderScale;
 
 const vec4 PAPER_COLOR = vec4(0.97f, 0.97f, 0.8f, 1.0f);
 
@@ -19,7 +20,7 @@ void main() {
     // tile uNoise across the screen
     vec2 ratio = vec2(textureSize(uColor, 0)) / vec2(textureSize(uNoise, 0));
     color = texture(uColor, v_uv);
-    float noise = texture(uNoise, v_uv * ratio * stippleScale).x * noiseScale;
+    float noise = texture(uNoise, (v_uv * ratio * stippleScale) / uRenderScale).x * noiseScale;
     vec4 bg = texture(uBg, v_uv * ratio * 8.0) * PAPER_COLOR;
 
     if (color.r <= noise) {
