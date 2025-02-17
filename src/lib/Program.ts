@@ -4,12 +4,20 @@ export class Program {
     private _vsText: string;
     private _fsText: string;
     protected _gl: WebGL2RenderingContext;
-    private _program: WebGLProgram;
+    protected _program: WebGLProgram;
     protected _uniforms = new Map<string, WebGLUniformLocation>();
-    private _uniformValues = new Map<string, {type: number, data: any[]}>();
+    protected _uniformValues = new Map<string, {type: number, data: any[]}>();
 
-    constructor(gl: WebGL2RenderingContext, vsText: string, fsText: string) {
+    constructor(gl: WebGL2RenderingContext, vsText: string | WebGLProgram, fsText: string) {
+        
         this._gl = gl;
+        if (vsText instanceof WebGLProgram) {
+            this._program = vsText;
+            this._fsText = "";
+            this._vsText = "";
+            return;
+        }
+
         this._vsText = vsText;
         this._fsText = fsText;
 
@@ -106,7 +114,6 @@ export class Program {
             if (!this._uniforms.has(key)) continue;
             this.setUniformInternal(key, this._uniformValues.get(key)!.type, this._uniformValues.get(key)!.data);
         }
-        this._uniformValues.clear();
     }
 
 }

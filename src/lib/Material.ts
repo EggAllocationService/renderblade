@@ -2,7 +2,7 @@ import { FBO } from "./FBO";
 import { Program } from "./Program";
 
 export class Material extends Program {
-    public constructor(gl: WebGL2RenderingContext, vsText: string, fsText: string) {
+    public constructor(gl: WebGL2RenderingContext, vsText: string | WebGLProgram, fsText: string) {
         super(gl, vsText, fsText);
     }
 
@@ -27,6 +27,13 @@ export class Material extends Program {
             i++;
         }
         super.use();
+    }
+
+    public clone(): Material {
+        var result = new Material(this._gl, this._program, "null");
+        result._uniforms = this._uniforms;
+        result._gl = this._gl;
+        return result;
     }
 }
 
