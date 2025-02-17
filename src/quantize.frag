@@ -6,10 +6,10 @@ in vec2 v_uv;
 
 out vec4 color;
 
-const float colors = 4.0;
+const float colors = 16.0;
 
 void main() {
-    float intensity = texture(uColor, v_uv).x;
+    vec3 intensity = texture(uColor, v_uv).xyz;
     intensity = floor(intensity * colors) / colors;
-    color = vec4(intensity, intensity, intensity, 1.0);
+    color = vec4(intensity, 1.0);
 }

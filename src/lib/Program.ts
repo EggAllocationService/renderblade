@@ -3,9 +3,9 @@
 export class Program {
     private _vsText: string;
     private _fsText: string;
-    private _gl: WebGL2RenderingContext;
+    protected _gl: WebGL2RenderingContext;
     private _program: WebGLProgram;
-    private _uniforms = new Map<string, WebGLUniformLocation>();
+    protected _uniforms = new Map<string, WebGLUniformLocation>();
     private _uniformValues = new Map<string, {type: number, data: any[]}>();
 
     constructor(gl: WebGL2RenderingContext, vsText: string, fsText: string) {
@@ -106,6 +106,7 @@ export class Program {
             if (!this._uniforms.has(key)) continue;
             this.setUniformInternal(key, this._uniformValues.get(key)!.type, this._uniformValues.get(key)!.data);
         }
+        this._uniformValues.clear();
     }
 
 }

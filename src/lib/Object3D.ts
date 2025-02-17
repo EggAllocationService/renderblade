@@ -5,13 +5,14 @@ import { Program } from "./Program";
 import baseVertexShader from './shaders/base.vert?raw';
 import baseFragmentShader from './shaders/normal.frag?raw';
 import { Matrix4, Vector3 } from "@math.gl/core";
+import { Material } from "./Material";
 
 export class Object3D implements Drawable {
     private _gl: WebGL2RenderingContext;
     private _vao: WebGLVertexArrayObject;
     private _model: ObjFileParser.ObjModel;
 
-    private _material: Program;
+    private _material: Material;
 
     private _position: Vector3 = new Vector3(0, 0, 0);
     private _scale: Vector3 = new Vector3(1, 1, 1);
@@ -27,7 +28,7 @@ export class Object3D implements Drawable {
         this._gl = gl;
         this._vao = this._gl.createVertexArray();
         this._model = (new ObjFileParser(obj)).parse().models[0];
-        this._material = new Program(this._gl, baseVertexShader, baseFragmentShader);
+        this._material = new Material(this._gl, baseVertexShader, baseFragmentShader);
 
         this.uploadVertexData();
     }
@@ -133,5 +134,13 @@ export class Object3D implements Drawable {
         this._position[0] = x;
         this._position[1] = y;
         this._position[2] = z;
+    }
+
+    public getMaterial(): Material {
+        return this._material;
+    }
+
+    public setMaterial(material: Material): void {
+        this._material = material;
     }
 }

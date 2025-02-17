@@ -1,77 +1,106 @@
 import './style.css'
-import monkeyObj from './Monkey.obj?raw'
-import cubeObj from './Ico_flat.obj?raw'
+import bunnyObj from './Icosphere.obj?raw'
+import teapotObj from './teapot.obj?raw'
 import { Camera } from './lib/Camera';
 import { Object3D } from './lib/Object3D';
 import { PostEffect } from './lib/PostEffect';
 import outlineFs from './outline.frag?raw'
+import quantizeFs from './quantize.frag?raw'
+import stippleFs from './stipple.frag?raw'
+import { fetchTexture } from './lib/util';
+import bluenoise from './bluenoise.png';
+import { Material } from './lib/Material';
 
-const app = document.getElementById('app') as HTMLDivElement;
+import baseVs from "./lib/shaders/base.vert?raw";
+import litFs from "./lit.frag?raw";
 
-const canvas = document.createElement('canvas');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+async function main() {
+    const app = document.getElementById('app') as HTMLDivElement;
 
-app.appendChild(canvas);
+    const canvas = document.createElement('canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-const gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
-const camera = new Camera(gl);
-camera.setPerspectiveMatrix(Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
+    app.appendChild(canvas);
 
-const cube = new Object3D(gl, cubeObj);
-const monkey = new Object3D(gl, monkeyObj);
-const outlineEffect = new PostEffect(gl, outlineFs);
-camera.setPostProcessing(true);
+    const gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
+    const camera = new Camera(gl);
+    camera.setPerspectiveMatrix(Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
 
-console.log(camera);
-cube.setScale(0.5, 0.5, 0.5);
-monkey.setScale(0.7, 0.7, 0.7);
+    const bunny = new Object3D(gl, bunnyObj);
+    const teapot = new Object3D(gl, teapotObj);
+    const outlineEffect = new PostEffect(gl, outlineFs);
+    const quantizeEffect = new PostEffect(gl, quantizeFs);
+    const stippleEffect = new PostEffect(gl, stippleFs);
 
-let rotationDeg = 0;
-gl.enable(gl.DEPTH_TEST);
-gl.enable(gl.CULL_FACE)
-gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    const litMaterial = new Material(gl, baseVs, litFs);
+    bunny.setMaterial(litMaterial);
+    teapot.setMaterial(litMaterial);
 
-var avg: number[] = new Array(100).fill(0);
-var i = 0;
+    const blueNoise = await fetchTexture(gl, bluenoise);
 
-const fpsEl = document.createElement('div');
-fpsEl.style.position = 'absolute';
-fpsEl.style.top = '0';
-fpsEl.style.left = '0';
-fpsEl.style.color = 'white';
-fpsEl.style.backgroundColor = 'black';
-fpsEl.style.padding = '5px';
-fpsEl.style.zIndex = '1000';
-app.appendChild(fpsEl);
+    stippleEffect.setTexture("uNoise", blueNoise);
 
-function render() {
-    performance.mark('renderStart');
-    camera.clear();
-    rotationDeg += 1;
-    rotationDeg %= 360;
+    camera.setPostProcessing(true);
 
-    cube.setRotation(0, rotationDeg * Math.PI / 180, rotationDeg * Math.PI / 180);
-    monkey.setRotation(0, -1 * rotationDeg * Math.PI / 180, rotationDeg * Math.PI / 180);
+    console.log(camera);
 
-    cube.setPosition(-1 * Math.sin(Date.now() / 1000), -1 * Math.cos(Date.now() / 1000), 0);
-    monkey.setPosition(1 * Math.sin(Date.now() / 1000), -1 * Math.sin(Date.now() / 1000), 0);
-    camera.draw(cube);
-    camera.draw(monkey);
+    let rotationDeg = 0;
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE)
+    gl.clearColor(1, 1, 1, 1.0);
 
-    camera.postStart();
-    camera.postPass(outlineEffect);
-    camera.postFinished();
-    performance.mark('renderEnd');
-    const time = performance.measure('render', 'renderStart', 'renderEnd');
-    avg[i++] = time.duration;
-    i %= 100;
-    if (i === 0) {
-        const averageFrameTime = avg.reduce((a, b) => a + b) / avg.length;
-        const fps = 1000 / averageFrameTime;
-        fpsEl.innerText = `FPS: ${fps.toFixed(2)}\nTriangles: ${camera.getDrawnTris()}`;
+    var avg: number[] = new Array(100).fill(0);
+    var i = 0;
+
+    const fpsEl = document.createElement('div');
+    fpsEl.style.position = 'absolute';
+    fpsEl.style.top = '0';
+    fpsEl.style.left = '0';
+    fpsEl.style.color = 'white';
+    fpsEl.style.backgroundColor = 'black';
+    fpsEl.style.padding = '5px';
+    fpsEl.style.zIndex = '1000';
+    app.appendChild(fpsEl);
+
+
+    bunny.setPosition(-2, 0.4, -2);
+    bunny.setScale(1, 1, 1);
+    teapot.setPosition(2, 0, -2);
+
+    console.log(stippleEffect);
+
+    teapot.setScale(0.3, 0.3, 0.3);
+    function render() {
+        performance.mark('renderStart');
+        camera.clear();
+        rotationDeg += 1;
+        rotationDeg %= 360;
+
+
+        teapot.setRotation(0, -1 * rotationDeg * Math.PI / 180, Math.PI / 10);
+        bunny.setRotation(0, -1 * rotationDeg * Math.PI / 180, rotationDeg * Math.PI / 180);
+
+        camera.draw(bunny);
+        camera.draw(teapot);
+
+        camera.postStart();
+        //camera.postPass(quantizeEffect);
+        camera.postPass(stippleEffect);
+        camera.postPass(outlineEffect);
+        camera.postFinished();
+        performance.mark('renderEnd');
+        const time = performance.measure('render', 'renderStart', 'renderEnd');
+        avg[i++] = time.duration;
+        i %= 100;
+        if (i === 0) {
+            const averageFrameTime = avg.reduce((a, b) => a + b) / avg.length;
+            const fps = 1000 / averageFrameTime;
+            fpsEl.innerText = `FPS: ${fps.toFixed(2)}\nTriangles: ${camera.getDrawnTris()}`;
+        }
+        requestAnimationFrame(render);
     }
-    requestAnimationFrame(render);
+    render();
 }
 
-render();
+main();

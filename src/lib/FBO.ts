@@ -1,7 +1,7 @@
 export class FBO {
     private _gl: WebGL2RenderingContext;
     private _framebuffer: WebGLFramebuffer | null = null;
-    private _hasDepth: boolean = true;
+    private _hasDepth: boolean;
     private _texture: WebGLTexture | null = null;
     private _depthBuffer: WebGLTexture | null = null;
     private _width: number;
@@ -10,11 +10,12 @@ export class FBO {
     constructor(gl: WebGL2RenderingContext, width: number, height: number, 
         sampling: number = gl.LINEAR, wrapping: number = gl.CLAMP_TO_EDGE, 
         format: number = gl.RGBA, internalFormat: number = gl.RGBA, 
-        type: number = gl.UNSIGNED_BYTE, hasDepth: boolean = true) {
+        type: number = gl.UNSIGNED_BYTE, hasDepth: boolean = false) {
 
         this._gl = gl;
         this._width = width;
         this._height = height;
+        this._hasDepth = hasDepth;
 
         this._framebuffer = this._gl.createFramebuffer();
         this._texture = this._gl.createTexture();
@@ -42,6 +43,8 @@ export class FBO {
             this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.DEPTH_COMPONENT24, this._width, this._height, 0, this._gl.DEPTH_COMPONENT, this._gl.UNSIGNED_INT, null);
             this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, this._gl.NEAREST);
             this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, this._gl.NEAREST);
+            this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.TEXTURE_2D, this._depthBuffer, 0);
         }
         // check framebuffer status
@@ -92,6 +95,22 @@ export class FBO {
         }
        
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
+    }
+
+    public static fromImage(gl: WebGL2RenderingContext, i: HTMLImageElement) {
+        if (!i.complete) {
+            throw new Error('Image is not loaded');
+        }
+
+        var result = new FBO(gl, i.width, i.height, gl.LINEAR, gl.REPEAT);
+
+        gl.bindTexture(gl.TEXTURE_2D, result._texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, i);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        
+        gl.bindTexture(gl.TEXTURE_2D, null);
+
+        return result;
     }
 }
 

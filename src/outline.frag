@@ -50,9 +50,5 @@ void main() {
     float edge_x = dot(sobel_x[0], surrounding[0]) + dot(sobel_x[1], surrounding[1]) + dot(sobel_x[2], surrounding[2]);
     float edge_y = dot(sobel_y[0], surrounding[0]) + dot(sobel_y[1], surrounding[1]) + dot(sobel_y[2], surrounding[2]);
     float edge = sqrt(edge_x * edge_x + edge_y * edge_y);
-    if (edge > 0.005) {
-        color = vec4(0, 0, 0, 1.0);
-    } else {
-        color = texture(uColor, v_uv);
-    }
+    color = mix(texture(uColor, v_uv), vec4(0.0, 0.0, 0.0, 1.0), edge);
 }
