@@ -3,8 +3,6 @@ precision highp float;
 uniform sampler2D uColor;
 uniform sampler2D uDepth;
 
-const int pixelSize = 16;
-
 in vec2 v_uv;
 
 out vec4 color;

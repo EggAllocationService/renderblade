@@ -8,12 +8,15 @@ in vec2 v_uv;
 
 out vec4 color;
 
+uniform float stippleScale;
+uniform float noiseScale;
+
 
 void main() {
     // tile uNoise across the screen
     vec2 ratio = vec2(textureSize(uColor, 0)) / vec2(textureSize(uNoise, 0));
     color = texture(uColor, v_uv);
-    float noise = texture(uNoise, v_uv * ratio * 0.8).x * 0.9;
+    float noise = texture(uNoise, v_uv * ratio * stippleScale).x * noiseScale;
     vec4 bg = texture(uBg, v_uv * ratio * 2.0);
 
     if (color.r <= noise) {
