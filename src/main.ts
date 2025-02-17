@@ -27,7 +27,7 @@ async function main() {
         stippleScale: 0.7,
         noiseScale: 0.9,
         colorDrain: 0.2,
-        frameTime: 0,
+        fps: 0,
         triangles: 0,
         degreesPerSecond: 20,
         inkColor: {r: 0.1529, g: 0.1333, b: 0.1216}
@@ -58,12 +58,9 @@ async function main() {
     });
 
     const statsFolder = pane.addFolder({title: 'Stats', expanded: true});
-    statsFolder.addBinding(state, 'frameTime', {
+    statsFolder.addBinding(state, 'fps', {
         readonly: true,
-        label: 'Frame Time',
-        view: 'graph',
-        min: 0,
-        max: 16
+        label: 'FPS',
     });
     statsFolder.addBinding(state, 'triangles', {
         readonly: true,
@@ -179,7 +176,7 @@ async function main() {
         i %= 100;
         if (i === 0) {
             const averageFrameTime = avg.reduce((a, b) => a + b) / avg.length;
-            state.frameTime = averageFrameTime;
+            state.fps = 1000 / averageFrameTime;
             state.triangles = camera.getDrawnTris();
         }
         last = performance.now();
