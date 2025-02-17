@@ -69,7 +69,7 @@ function render() {
     if (i === 0) {
         const averageFrameTime = avg.reduce((a, b) => a + b) / avg.length;
         const fps = 1000 / averageFrameTime;
-        fpsEl.innerText = `FPS: ${fps.toFixed(2)}`;
+        fpsEl.innerText = `FPS: ${fps.toFixed(2)}\nTriangles: ${camera.getDrawnTris()}`;
     }
     requestAnimationFrame(render);
 }

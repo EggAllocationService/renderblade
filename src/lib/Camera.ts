@@ -16,6 +16,8 @@ export class Camera {
     private _postVao: WebGLVertexArrayObject;
     private _postCopyProgram: PostEffect;
 
+    private _frameDrawnTris = 0;
+
     constructor(gl: WebGL2RenderingContext) {
         this._gl = gl
         this._postBuffer = new DoublesidedFBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.NEAREST, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, false)
@@ -50,6 +52,8 @@ export class Camera {
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT)
         this._postBuffer.unbind();
 
+        this._frameDrawnTris = 0;
+
     }
 
     public draw(drawable: Drawable) {
@@ -57,7 +61,7 @@ export class Camera {
         if (this._enablePostProcessing) {
             this._renderbuffer.bindAsTarget();
         }
-        drawable.draw(this._gl, this._projectionMatrix, this._viewMatrix)
+        this._frameDrawnTris += drawable.draw(this._gl, this._projectionMatrix, this._viewMatrix);
     }
 
     public setPerspectiveMatrix(fov: number, aspect: number, near: number, far: number) {
@@ -99,5 +103,9 @@ export class Camera {
         this._postBuffer.bindReadToTexture(0);
         this._postCopyProgram.setUniform('uColor', this._gl.INT, 0);
         this._gl.drawArrays(this._gl.TRIANGLE_STRIP, 0, 4);
+    }
+
+    public getDrawnTris() {
+        return this._frameDrawnTris;
     }
 }

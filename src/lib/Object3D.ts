@@ -105,7 +105,7 @@ export class Object3D implements Drawable {
         return Matrix4.IDENTITY.clone().translate(this._position).scale(this._scale).rotateXYZ(this._rotation);
     }
 
-    public draw(_: WebGL2RenderingContext, projectionMatrix: Matrix4, viewMatrix: Matrix4): void {
+    public draw(_: WebGL2RenderingContext, projectionMatrix: Matrix4, viewMatrix: Matrix4): number {
         this._gl.bindVertexArray(this._vao);
         const modelMatrix = this.generateModelMatrix();
         this._material.setUniform('u_projectionMatrix', this._gl.FLOAT_MAT4, projectionMatrix);
@@ -116,6 +116,7 @@ export class Object3D implements Drawable {
         this._material.use();
 
         this._gl.drawArrays(this._gl.TRIANGLES, 0, this._vertexCount);
+        return this._vertexCount / 3;
     }
     
     public setRotation(x: number, y: number, z: number): void {
