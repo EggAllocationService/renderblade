@@ -18,8 +18,8 @@ import {Pane} from 'tweakpane';
 
 async function main() {
     const state = {
-        outline: false,
-        stipple: false,
+        outline: true,
+        stipple: true,
         stippleScale: 0.8,
         noiseScale: 0.9,
         colorDrain: 0.2,
