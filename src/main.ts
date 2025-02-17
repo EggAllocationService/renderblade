@@ -5,7 +5,6 @@ import { Camera } from './lib/Camera';
 import { Object3D } from './lib/Object3D';
 import { PostEffect } from './lib/PostEffect';
 import outlineFs from './outline.frag?raw'
-import quantizeFs from './quantize.frag?raw'
 import stippleFs from './stipple.frag?raw'
 import { fetchTexture } from './lib/util';
 import bluenoise from './bluenoise.png';
@@ -30,7 +29,6 @@ async function main() {
     const bunny = new Object3D(gl, bunnyObj);
     const teapot = new Object3D(gl, teapotObj);
     const outlineEffect = new PostEffect(gl, outlineFs);
-    const quantizeEffect = new PostEffect(gl, quantizeFs);
     const stippleEffect = new PostEffect(gl, stippleFs);
 
     const litMaterial = new Material(gl, baseVs, litFs);
@@ -85,7 +83,6 @@ async function main() {
         camera.draw(teapot);
 
         camera.postStart();
-        //camera.postPass(quantizeEffect);
         camera.postPass(stippleEffect);
         camera.postPass(outlineEffect);
         camera.postFinished();

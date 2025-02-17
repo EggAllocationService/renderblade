@@ -1,6 +1,5 @@
 import ObjFileParser from "obj-file-parser";
 import Drawable from "./interface/Drawable";
-import { Program } from "./Program";
 
 import baseVertexShader from './shaders/base.vert?raw';
 import baseFragmentShader from './shaders/normal.frag?raw';
