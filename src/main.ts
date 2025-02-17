@@ -20,7 +20,7 @@ async function main() {
     const state = {
         outline: true,
         stipple: true,
-        stippleScale: 0.8,
+        stippleScale: 0.7,
         noiseScale: 0.9,
         colorDrain: 0.2,
         frameTime: 0,
