@@ -7,7 +7,7 @@ delete packageJson.dependencies["tweakpane"];
 
 packageJson.browser = "renderblade.js"
 packageJson.types = "renderblade.d.ts"
-packageJson.private = "false"
+packageJson.private = false;
 packageJson.version = process.argv[2].replace("refs/tags/", "");
 packageJson.name = "@EggAllocationService/renderblade";
 
