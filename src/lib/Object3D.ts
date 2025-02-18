@@ -1,10 +1,16 @@
 import ObjFileParser from "obj-file-parser";
 import Drawable from "./interface/Drawable";
 
-import baseVertexShader from './shaders/base.vert?raw';
+import baseVertexShader from './shaders/simple.vert?raw';
 import baseFragmentShader from './shaders/normal.frag?raw';
+
+import velocityVertexShader from './shaders/base.vert?raw';
+import velocityFragmentShader from './shaders/velocity.frag?raw';
+
 import { Matrix4, Vector3 } from "@math.gl/core";
 import { Material } from "./Material";
+import { FBO } from "./FBO";
+import { SimpleMaterial } from "./SimpleMaterial";
 
 export class Object3D implements Drawable {
     private _gl: WebGL2RenderingContext;
@@ -18,6 +24,8 @@ export class Object3D implements Drawable {
     private _rotation: Vector3 = new Vector3(0, 0, 0);
     private _vertexCount: number = 0;
 
+    private _lastPvm: Matrix4 = Matrix4.IDENTITY;
+
 
     /**
      * 
@@ -27,7 +35,7 @@ export class Object3D implements Drawable {
         this._gl = gl;
         this._vao = this._gl.createVertexArray();
         this._model = (new ObjFileParser(obj)).parse().models[0];
-        this._material = new Material(this._gl, baseVertexShader, baseFragmentShader);
+        this._material = new SimpleMaterial(this._gl, baseVertexShader, baseFragmentShader);
 
         this.uploadVertexData();
     }
@@ -105,13 +113,17 @@ export class Object3D implements Drawable {
         return Matrix4.IDENTITY.clone().translate(this._position).scale(this._scale).rotateXYZ(this._rotation);
     }
 
-    public draw(_: WebGL2RenderingContext, projectionMatrix: Matrix4, viewMatrix: Matrix4): number {
+    public draw(projectionMatrix: Matrix4, viewMatrix: Matrix4): number {
+        this._gl.drawBuffers([this._gl.COLOR_ATTACHMENT0, this._gl.COLOR_ATTACHMENT1]);
         this._gl.bindVertexArray(this._vao);
         const modelMatrix = this.generateModelMatrix();
+        const pvm = projectionMatrix.clone().multiplyRight(viewMatrix).multiplyRight(modelMatrix)
         this._material.setUniform('u_projectionMatrix', this._gl.FLOAT_MAT4, projectionMatrix);
         this._material.setUniform('u_viewMatrix', this._gl.FLOAT_MAT4, viewMatrix);
         this._material.setUniform('u_modelMatrix', this._gl.FLOAT_MAT4, modelMatrix);
-        this._material.setUniform('u_pvmMatrix', this._gl.FLOAT_MAT4, projectionMatrix.clone().multiplyRight(viewMatrix).multiplyRight(modelMatrix));
+        this._material.setUniform('u_pvmMatrix', this._gl.FLOAT_MAT4, pvm);
+        this._material.setUniform('u_previousPvmMatrix', this._gl.FLOAT_MAT4, this._lastPvm);
+        this._lastPvm = pvm;
 
         this._material.use();
 

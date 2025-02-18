@@ -3,6 +3,7 @@ import Drawable from "./interface/Drawable";
 import { Matrix4 } from "@math.gl/core";
 import { PostEffect } from "./PostEffect";
 import copyFs from './shaders/copy.frag?raw'
+import taaFs from './shaders/taa.frag?raw'
 import { TextureTarget } from "./Material";
 
 export class Camera {
@@ -10,12 +11,17 @@ export class Camera {
     private _enablePostProcessing: boolean = false;
     private _postBuffer: DoublesidedFBO;
     private _renderbuffer: FBO;
+    private _velocityTexture: WebGLTexture;
     
     private _viewMatrix: Matrix4 = Matrix4.IDENTITY;
     private _projectionMatrix: Matrix4 = Matrix4.IDENTITY;
 
     private _postVao: WebGLVertexArrayObject;
     private _postCopyProgram: PostEffect;
+    private _lastColor: FBO;
+
+    private _effectiveWidth: number;
+    private _effectiveHeight: number;
 
     private _extraBuffers: Map<string, FBO> = new Map<string, FBO>();
 
@@ -31,7 +37,12 @@ export class Camera {
     }
 
     constructor(gl: WebGL2RenderingContext) {
-        this._gl = gl
+        this._gl = gl;
+
+        var ext = gl.getExtension("EXT_color_buffer_float");
+        if (!ext) {
+            throw new Error("Floating point textures not supported");
+        }
         this._postBuffer = new DoublesidedFBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, false)
         this._renderbuffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, true);
 
@@ -46,6 +57,22 @@ export class Camera {
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
         this._postCopyProgram = new PostEffect(this._gl, copyFs);
+    
+        this._lastColor = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, false);
+
+        this._velocityTexture = this._gl.createTexture();
+        this._gl.bindTexture(this._gl.TEXTURE_2D, this._velocityTexture);
+        this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RG16F, this._gl.canvas.width, this._gl.canvas.height, 0, this._gl.RG, this._gl.FLOAT, null);
+        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, this._gl.NEAREST);
+        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, this._gl.NEAREST);
+        
+        this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._renderbuffer._framebuffer);
+        this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT1, this._gl.TEXTURE_2D, this._velocityTexture, 0);
+        this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
+        this._gl.bindTexture(this._gl.TEXTURE_2D, null);
+
+        this._effectiveWidth = this._gl.canvas.width;
+        this._effectiveHeight = this._gl.canvas.height;
     }
 
     public setPostProcessing(enable: boolean) {
@@ -59,6 +86,11 @@ export class Camera {
 
     public clear() {
         this._renderbuffer.clear();
+        this._gl.drawBuffers([this._gl.NONE, this._gl.COLOR_ATTACHMENT1]);
+        this._gl.clearColor(0, 0, 0, 1);
+        this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
+        this._gl.drawBuffers([this._gl.COLOR_ATTACHMENT0, this._gl.NONE])
+
         this._postBuffer.getRead().clear();
         this._postBuffer.getWrite().clear();
 
@@ -74,16 +106,17 @@ export class Camera {
     }
 
     public resize(width: number, height: number) {
-        width = Math.floor(width * this.renderScale);
-        height = Math.floor(height * this.renderScale);
-        this._postBuffer.reallocate(width, height);
-        this._renderbuffer.reallocate(width, height);
+        this._effectiveWidth = Math.floor(width * this.renderScale);
+        this._effectiveHeight = Math.floor(height * this.renderScale);
+        this._postBuffer.reallocate(this._effectiveWidth, this._effectiveHeight);
+        this._renderbuffer.reallocate(this._effectiveWidth, this._effectiveHeight);
+        this._lastColor.reallocate(this._effectiveWidth, this._effectiveHeight);
 
-        this._cameraData.aspect = width / height;
+        this._cameraData.aspect = this._effectiveWidth / this._effectiveHeight;
         this.regenerateProjectionMatrix();
 
         for (let buffer of this._extraBuffers.values()) {
-            buffer.reallocate(width, height);
+            buffer.reallocate(this._effectiveWidth, this._effectiveHeight);
         }
     }
 
@@ -99,7 +132,7 @@ export class Camera {
             this._gl.depthMask(target.hasDepth)
         } 
         
-        this._frameDrawnTris += drawable.draw(this._gl, this._projectionMatrix, this._viewMatrix);
+        this._frameDrawnTris += drawable.draw(this._projectionMatrix, this._viewMatrix);
     }
 
     private regenerateProjectionMatrix() {
@@ -140,7 +173,7 @@ export class Camera {
     }
 
     public postPass(program: PostEffect) {
-
+        program.setTexture("uVelocity", this._velocityTexture);
         program.setTexture("uColor", this._postBuffer.getRead());
         program.setTexture("uDepth", this._renderbuffer, TextureTarget.DEPTH);
         program.setUniform("uRenderScale", this._gl.FLOAT, this.renderScale);

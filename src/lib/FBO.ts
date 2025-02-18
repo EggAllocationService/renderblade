@@ -1,6 +1,6 @@
 export class FBO {
     private _gl: WebGL2RenderingContext;
-    private _framebuffer: WebGLFramebuffer | null = null;
+    public readonly _framebuffer: WebGLFramebuffer;
     public hasDepth: boolean;
     public hasColor: boolean;
     private _texture: WebGLTexture | null = null;
@@ -41,7 +41,7 @@ export class FBO {
 
         if (hasColor) {
             this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
-            this._gl.texImage2D(this._gl.TEXTURE_2D, 0, format, this._width, this._height, 0, internalFormat, type, null);
+            this._gl.texImage2D(this._gl.TEXTURE_2D, 0, internalFormat, this._width, this._height, 0, format, type, null);
             this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, sampling);
             this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, sampling);
             this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, wrapping);

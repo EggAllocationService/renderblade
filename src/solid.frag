@@ -2,10 +2,8 @@
 precision highp float;
 uniform vec3 uColor;
 
-out vec4 color;
 
 
-
-void main() {
-    color = vec4(uColor, 1.0);
+vec4 fragment(in vec2 uv, in vec3 normal, in vec4 position) {
+    return vec4(uColor, 1.0);
 }

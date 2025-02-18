@@ -12,12 +12,15 @@ import bluenoise from './textures/bluenoise.png';
 import paper from './textures/paper.png';
 import { Material, TextureTarget } from './lib/Material';
 
-import baseVs from "./lib/shaders/base.vert?raw";
+import baseVs from "./lib/shaders/simple.vert?raw";
 import litFs from "./lit.frag?raw";
 import colorFs from "./solid.frag?raw";
 import invertFs from "./invert.frag?raw";
 
+import taaFs from "./lib/shaders/taa.frag?raw";
+
 import {Pane} from 'tweakpane';
+import { SimpleMaterial } from './lib/SimpleMaterial';
 
 async function main() {
     const state = {
@@ -93,7 +96,7 @@ async function main() {
     const outlineEffect = new PostEffect(gl, outlineFs);
     const stippleEffect = new PostEffect(gl, stippleFs);
 
-    const litMaterial = new Material(gl, baseVs, litFs);
+    const litMaterial = new SimpleMaterial(gl, baseVs, litFs);
     sphere.setMaterial(litMaterial);
     teapot.setMaterial(litMaterial);
 
@@ -107,7 +110,7 @@ async function main() {
 
     const invertBuffer = camera.createExtraBuffer("invert", TextureTarget.DEPTH);
     const monkey = new Object3D(gl, monkeyObj);
-    const invertMaterial = new Material(gl, baseVs, colorFs);
+    const invertMaterial = new SimpleMaterial(gl, baseVs, colorFs);
     invertMaterial.setUniform("uColor", gl.FLOAT_VEC3, 1, 1, 1);
     monkey.setMaterial(invertMaterial)
     monkey.setScale(2.5, 2.5, 2.5);
@@ -132,10 +135,10 @@ async function main() {
 
     var last = performance.now();
     function render() {
-        
+
         var dt = performance.now() - last;
-        
         performance.mark('renderStart');
+
         litMaterial.setUniform('uColorDrain', gl.FLOAT, state.colorDrain);
         camera.clear();
         invertBuffer.clear();
@@ -171,7 +174,6 @@ async function main() {
             invertEffect.setTexture("uMask", invertBuffer, TextureTarget.DEPTH);
             camera.postPass(invertEffect);
         }
-
         camera.postFinished();
         performance.mark('renderEnd');
         const time = performance.measure('render', 'renderStart', 'renderEnd');
