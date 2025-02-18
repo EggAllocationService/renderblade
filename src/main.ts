@@ -112,7 +112,7 @@ async function main() {
     stippleEffect.setTexture("uNoise", blueNoise);
     stippleEffect.setTexture("uBg", paperTexture);
 
-    //camera.setSampleCount(gl.getParameter(gl.MAX_SAMPLES));
+    camera.setSampleCount(gl.getParameter(gl.MAX_SAMPLES));
 
     const invertBuffer = camera.createExtraBuffer("invert", TextureTarget.DEPTH);
     const monkey = new Object3D(gl, monkeyObj);

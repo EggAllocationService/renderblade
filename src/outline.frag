@@ -47,7 +47,7 @@ void main() {
     vec3 w = texelFetch(uNormal, ivec2(gl_FragCoord.xy) + ivec2(-1, 0), 0).xyz;
     vec3 nw = texelFetch(uNormal, ivec2(gl_FragCoord.xy) + ivec2(-1, -1), 0).xyz;
     vec3 center = texture(uNormal, v_uv).xyz;
-    
+
     mat3 surrounding_r = mat3(
         vec3(nw.r, n.r, ne.r),
         vec3(w.r, center.r, e.r),
@@ -77,7 +77,6 @@ void main() {
     );
 
     float edge = length(edge_r) + length(edge_g) + length(edge_b);
-    edge = min(1.0, edge);
-    edge = max (0.0, edge);
+    edge = clamp(edge * 10.0 ,0.0, 1.0);
     color = mix(vec4(0), vec4(uOutlineColor * vec3(0.97f, 0.97f, 0.8f), 1.0), edge);
 }
