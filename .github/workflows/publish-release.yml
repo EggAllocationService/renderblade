@@ -20,7 +20,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: node generatePackageJson.js ${{ github.ref }}
-      - run: rm -r node_modules public src *.js && mv dist/* .
+      - run: rm -r node_modules src *.js && mv dist/* .
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
