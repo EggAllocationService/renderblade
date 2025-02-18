@@ -110,7 +110,7 @@ export class Object3D implements Drawable {
     }
 
     public draw(projectionMatrix: Matrix4, viewMatrix: Matrix4): number {
-        this._gl.drawBuffers([this._gl.COLOR_ATTACHMENT0, this._gl.COLOR_ATTACHMENT1]);
+        this._gl.drawBuffers([this._gl.COLOR_ATTACHMENT0, this._gl.COLOR_ATTACHMENT1, this._gl.COLOR_ATTACHMENT2]);
         this._gl.bindVertexArray(this._vao);
         const modelMatrix = this.generateModelMatrix();
         const pvm = projectionMatrix.clone().multiplyRight(viewMatrix).multiplyRight(modelMatrix)

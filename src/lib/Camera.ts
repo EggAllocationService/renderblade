@@ -11,10 +11,12 @@ export class Camera {
 
     private _renderbuffer: WebGLFramebuffer;
     private _renderColor: WebGLRenderbuffer;
-    private _renderDepth: WebGLTexture;
-    private _velocityTexture: WebGLRenderbuffer;
+    private _renderDepth: WebGLRenderbuffer;
+    private _renderVelocity: WebGLRenderbuffer;
+    private _renderNormal: WebGLRenderbuffer;
 
-    private _velocityBuffer: FBO;
+    private _velocityDepthBuffer: FBO;
+    private _normalBuffer: FBO;
     
     private _viewMatrix: Matrix4 = Matrix4.IDENTITY;
     private _projectionMatrix: Matrix4 = Matrix4.IDENTITY;
@@ -78,13 +80,18 @@ export class Camera {
         this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.RENDERBUFFER, this._renderDepth);
 
 
-        this._velocityTexture = this._gl.createRenderbuffer();
-        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._velocityTexture);
+        this._renderVelocity = this._gl.createRenderbuffer();
+        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._renderVelocity);
         this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RG16F, this._gl.canvas.width, this._gl.canvas.height);
-        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT1, this._gl.RENDERBUFFER, this._velocityTexture);
+        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT1, this._gl.RENDERBUFFER, this._renderVelocity);
 
-        this._velocityBuffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RG, this._gl.RG16F, this._gl.FLOAT, true, true);
-        
+        this._renderNormal = this._gl.createRenderbuffer();
+        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._renderNormal);
+        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RGBA16F, this._gl.canvas.width, this._gl.canvas.height);
+        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT2, this._gl.RENDERBUFFER, this._renderNormal);
+
+        this._velocityDepthBuffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RG, this._gl.RG16F, this._gl.FLOAT, true, true);
+        this._normalBuffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA16F, this._gl.FLOAT, false, true);
 
         // if the framebuffer isn't complete, throw an error
         if (this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER) !== this._gl.FRAMEBUFFER_COMPLETE) {
@@ -105,13 +112,13 @@ export class Camera {
 
     public clear() {
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._renderbuffer);
-        this._gl.drawBuffers([this._gl.COLOR_ATTACHMENT0, this._gl.NONE]);
+        this._gl.drawBuffers([this._gl.COLOR_ATTACHMENT0, this._gl.NONE, this._gl.NONE]);
         this._gl.clearColor(this._clearColor[0], this._clearColor[1], this._clearColor[2], this._clearColor[3]);
         this._gl.clear(this._gl.COLOR_BUFFER_BIT);
-        this._gl.drawBuffers([this._gl.NONE, this._gl.COLOR_ATTACHMENT1]);
+        this._gl.drawBuffers([this._gl.NONE, this._gl.COLOR_ATTACHMENT1, this._gl.COLOR_ATTACHMENT2]);
         this._gl.clearColor(0, 0, 0, 1);
         this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
-        this._gl.drawBuffers([this._gl.COLOR_ATTACHMENT0, this._gl.NONE])
+        this._gl.drawBuffers([this._gl.COLOR_ATTACHMENT0, this._gl.NONE, this._gl.NONE]);
 
         this._postBuffer.getRead().clear();
         this._postBuffer.getWrite().clear();
@@ -131,6 +138,9 @@ export class Camera {
         this._effectiveHeight = Math.floor(height * this.renderScale);
         this._postBuffer.reallocate(this._effectiveWidth, this._effectiveHeight);
         this._lastColor.reallocate(this._effectiveWidth, this._effectiveHeight);
+
+        this._velocityDepthBuffer.reallocate(this._effectiveWidth, this._effectiveHeight);
+        this._normalBuffer.reallocate(this._effectiveWidth, this._effectiveHeight);
 
         this._cameraData.aspect = this._effectiveWidth / this._effectiveHeight;
         this.regenerateProjectionMatrix();
@@ -155,9 +165,13 @@ export class Camera {
         this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.DEPTH_COMPONENT24, this._effectiveWidth, this._effectiveHeight);
         this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.RENDERBUFFER, this._renderDepth);
 
-        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._velocityTexture);
+        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._renderVelocity);
         this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RG16F, this._effectiveWidth, this._effectiveHeight);
-        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT1, this._gl.RENDERBUFFER, this._velocityTexture);
+        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT1, this._gl.RENDERBUFFER, this._renderVelocity);
+
+        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._renderNormal);
+        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RGBA16F, this._effectiveWidth, this._effectiveHeight);
+        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT2, this._gl.RENDERBUFFER, this._renderNormal);
     }
 
     public draw(drawable: Drawable, target: FBO | null = null) {
@@ -225,21 +239,31 @@ export class Camera {
         this._gl.clear(this._gl.COLOR_BUFFER_BIT)
         this._gl.blitFramebuffer(0, 0, this._effectiveWidth, this._effectiveHeight, 0, 0, this._effectiveWidth, this._effectiveHeight, this._gl.COLOR_BUFFER_BIT, this._gl.NEAREST);
 
-        this._gl.bindFramebuffer(this._gl.DRAW_FRAMEBUFFER, this._velocityBuffer._framebuffer);
+        this._gl.bindFramebuffer(this._gl.DRAW_FRAMEBUFFER, this._velocityDepthBuffer._framebuffer);
         this._gl.readBuffer(this._gl.COLOR_ATTACHMENT1);
         this._gl.blitFramebuffer(0, 0, this._effectiveWidth, this._effectiveHeight, 0, 0, this._effectiveWidth, this._effectiveHeight, this._gl.COLOR_BUFFER_BIT, this._gl.NEAREST);
+        
         this._gl.readBuffer(this._gl.COLOR_ATTACHMENT0);
         this._gl.blitFramebuffer(0, 0, this._effectiveWidth, this._effectiveHeight, 0, 0, this._effectiveWidth, this._effectiveHeight, this._gl.DEPTH_BUFFER_BIT, this._gl.NEAREST);
-    
+        
+        this._gl.bindFramebuffer(this._gl.DRAW_FRAMEBUFFER, this._normalBuffer._framebuffer);
+        this._gl.readBuffer(this._gl.COLOR_ATTACHMENT2);
+        this._gl.blitFramebuffer(0, 0, this._effectiveWidth, this._effectiveHeight, 0, 0, this._effectiveWidth, this._effectiveHeight, this._gl.COLOR_BUFFER_BIT, this._gl.NEAREST);
+
+        this._gl.readBuffer(this._gl.COLOR_ATTACHMENT0);
 
         this._postBuffer.swap();
     }
 
     public postPass(program: PostEffect, target: FBO | null = null, source: FBO = this._postBuffer.getRead()) {
 
-        program.setTexture("uVelocity", this._velocityBuffer);
+        program.setTexture("uVelocity", this._velocityDepthBuffer);
         program.setTexture("uColor", source);
-        program.setTexture("uDepth", this._velocityBuffer, TextureTarget.DEPTH);
+        program.setTexture("uDepth", this._velocityDepthBuffer, TextureTarget.DEPTH);
+        program.setTexture("uNormal", this._normalBuffer);
+        
+        program.setUniform("uCameraNear", this._gl.FLOAT, this._cameraData.near);
+        program.setUniform("uCameraFar", this._gl.FLOAT, this._cameraData.far);
         program.setUniform("uRenderScale", this._gl.FLOAT, this.renderScale);
         program.use();
         this._gl.bindVertexArray(this._postVao);

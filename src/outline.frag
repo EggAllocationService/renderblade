@@ -2,6 +2,7 @@
 precision highp float;
 uniform sampler2D uColor;
 uniform sampler2D uDepth;
+uniform sampler2D uNormal;
 uniform vec3 uOutlineColor;
 
 in vec2 v_uv;
@@ -28,35 +29,54 @@ float linearDepth(float depth) {
 }
 
 void main() {
-    float depth = texture(uDepth, v_uv).r;
-    float linear = linearDepth(depth);
+    
 
-    ivec2 resolution = textureSize(uDepth, 0);
+    ivec2 resolution = textureSize(uNormal, 0);
     ivec2 coord = ivec2(gl_FragCoord.xy);
     if (coord.x == 0 || coord.y == 0 || coord.x == resolution.x - 1 || coord.y == resolution.y - 1) {
         color = texture(uColor, v_uv);
         return;
     }
 
-    float n = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(0, -1), 0).r);
-    float ne = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(1, -1), 0).r);
-    float e = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(1, 0), 0).r);
-    float se = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(1, 1), 0).r);
-    float s = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(0, 1), 0).r);
-    float sw = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(-1, 1), 0).r);
-    float w = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(-1, 0), 0).r);
-    float nw = linearDepth(texelFetch(uDepth, ivec2(gl_FragCoord.xy) + ivec2(-1, -1), 0).r);
-
-    mat3 surrounding = mat3(
-        vec3(nw, n, ne),
-        vec3(w, linear, e),
-        vec3(sw, s, se)
+    vec3 n = texelFetch(uNormal, ivec2(gl_FragCoord.xy) + ivec2(0, -1), 0).xyz;
+    vec3 ne = texelFetch(uNormal, ivec2(gl_FragCoord.xy) + ivec2(1, -1), 0).xyz;
+    vec3 e = texelFetch(uNormal, ivec2(gl_FragCoord.xy) + ivec2(1, 0), 0).xyz;
+    vec3 se = texelFetch(uNormal, ivec2(gl_FragCoord.xy) + ivec2(1, 1), 0).xyz;
+    vec3 s = texelFetch(uNormal, ivec2(gl_FragCoord.xy) + ivec2(0, 1), 0).xyz;
+    vec3 sw = texelFetch(uNormal, ivec2(gl_FragCoord.xy) + ivec2(-1, 1), 0).xyz;
+    vec3 w = texelFetch(uNormal, ivec2(gl_FragCoord.xy) + ivec2(-1, 0), 0).xyz;
+    vec3 nw = texelFetch(uNormal, ivec2(gl_FragCoord.xy) + ivec2(-1, -1), 0).xyz;
+    vec3 center = texture(uNormal, v_uv).xyz;
+    
+    mat3 surrounding_r = mat3(
+        vec3(nw.r, n.r, ne.r),
+        vec3(w.r, center.r, e.r),
+        vec3(sw.r, s.r, se.r)
     );
 
-    float edge_x = dot(sobel_x[0], surrounding[0]) + dot(sobel_x[1], surrounding[1]) + dot(sobel_x[2], surrounding[2]);
-    float edge_y = dot(sobel_y[0], surrounding[0]) + dot(sobel_y[1], surrounding[1]) + dot(sobel_y[2], surrounding[2]);
-    float edge = sqrt(edge_x * edge_x + edge_y * edge_y);
-    edge = abs(edge);
+    mat3 surrounding_g = mat3(
+        vec3(nw.g, n.g, ne.g),
+        vec3(w.g, center.g, e.g),
+        vec3(sw.g, s.g, se.g)
+    );
+
+    mat3 surrounding_b = mat3(
+        vec3(nw.b, n.b, ne.b),
+        vec3(w.b, center.b, e.b),
+        vec3(sw.b, s.b, se.b)
+    );
+
+    vec2 edge_r = vec2(
+        dot(sobel_x[0], surrounding_r[0]) + dot(sobel_x[1], surrounding_r[1]) + dot(sobel_x[2], surrounding_r[2])
+    );
+    vec2 edge_g = vec2(
+        dot(sobel_x[0], surrounding_g[0]) + dot(sobel_x[1], surrounding_g[1]) + dot(sobel_x[2], surrounding_g[2])
+    );
+    vec2 edge_b = vec2(
+        dot(sobel_x[0], surrounding_b[0]) + dot(sobel_x[1], surrounding_b[1]) + dot(sobel_x[2], surrounding_b[2])
+    );
+
+    float edge = length(edge_r) + length(edge_g) + length(edge_b);
     edge = min(1.0, edge);
     edge = max (0.0, edge);
     color = mix(vec4(0), vec4(uOutlineColor * vec3(0.97f, 0.97f, 0.8f), 1.0), edge);

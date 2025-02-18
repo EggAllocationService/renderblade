@@ -5,6 +5,7 @@ in vec3 v_normal;
 
 layout(location = 0) out vec4 color;
 layout(location = 1) out vec4 velocity;
+layout(location = 2) out vec4 normal;
 
 vec4 fragment(in vec2 uv, in vec3 normal, in vec4 position);
 
@@ -26,4 +27,6 @@ void main() {
     v.y = -v.y;
     
     velocity = vec4(v, 0.0, 1.0);
+
+    normal = vec4(v_normal, 1.0);
 }

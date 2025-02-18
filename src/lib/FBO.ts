@@ -8,6 +8,14 @@ export class FBO {
     private _width: number;
     private _height: number;
     private _clearColor = [0, 0, 0, 1];
+    
+
+    public get texture(): WebGLTexture {
+        if (this._texture === null) {
+            throw new Error('Framebuffer does not have a color buffer');
+        }
+        return this._texture;
+    }
 
     constructor(gl: WebGL2RenderingContext, width: number, height: number, 
         sampling: number = gl.LINEAR, wrapping: number = gl.CLAMP_TO_EDGE, 
@@ -46,6 +54,7 @@ export class FBO {
             this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, sampling);
             this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_S, wrapping);
             this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_WRAP_T, wrapping);
+
             this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.TEXTURE_2D, this._texture, 0);
         }
 
@@ -60,7 +69,7 @@ export class FBO {
         }
         // check framebuffer status
         if (this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER) !== this._gl.FRAMEBUFFER_COMPLETE) {
-            throw new Error('Framebuffer is not complete');
+            throw new Error('Framebuffer is not complete: ' + this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER));
         }
 
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);

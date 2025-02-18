@@ -112,7 +112,7 @@ async function main() {
     stippleEffect.setTexture("uNoise", blueNoise);
     stippleEffect.setTexture("uBg", paperTexture);
 
-    camera.setSampleCount(gl.getParameter(gl.MAX_SAMPLES));
+    //camera.setSampleCount(gl.getParameter(gl.MAX_SAMPLES));
 
     const invertBuffer = camera.createExtraBuffer("invert", TextureTarget.DEPTH);
     const monkey = new Object3D(gl, monkeyObj);
@@ -176,7 +176,7 @@ async function main() {
             outlineEffect.setUniform("uOutlineColor", gl.FLOAT_VEC3, state.inkColor.r, state.inkColor.g, state.inkColor.b);
             camera.postPass(outlineEffect, outlineBuffer);
             camera.postPass(fxaaEffect, aaOutlineBuffer, outlineBuffer);
-            blendEffect.setTexture("uOutline", aaOutlineBuffer, TextureTarget.COLOR);
+            blendEffect.setTexture("uOutline", outlineBuffer, TextureTarget.COLOR);
             camera.postPass(blendEffect);
         }
         if (state.invertMask) {
