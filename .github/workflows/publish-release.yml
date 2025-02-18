@@ -20,7 +20,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: node generatePackageJson.js ${{ github.ref }}
-      - run: cd dist && && npm config set registry 'https://npm.pkg.github.com' && npm publish
+      - run: cd dist && && npm config set registry 'https://npm.pkg.github.com' && npm publish --access public --registry https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
