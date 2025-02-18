@@ -13,7 +13,9 @@ export class Camera {
     private _renderbuffer: WebGLFramebuffer;
     private _renderColor: WebGLRenderbuffer;
     private _renderDepth: WebGLTexture;
-    private _velocityTexture: WebGLTexture;
+    private _velocityTexture: WebGLRenderbuffer;
+
+    private _velocityBuffer: FBO;
     
     private _viewMatrix: Matrix4 = Matrix4.IDENTITY;
     private _projectionMatrix: Matrix4 = Matrix4.IDENTITY;
@@ -28,6 +30,8 @@ export class Camera {
     private _extraBuffers: Map<string, FBO> = new Map<string, FBO>();
 
     private _frameDrawnTris = 0;
+
+    private _multiSample: number = 0;
 
     private renderScale: number = 1;
 
@@ -63,25 +67,25 @@ export class Camera {
         
         this._renderbuffer = this._gl.createFramebuffer();
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._renderbuffer);
+
         this._renderColor = this._gl.createRenderbuffer();
         this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._renderColor);
-        this._gl.renderbufferStorage(this._gl.RENDERBUFFER, this._gl.RGBA8, this._gl.canvas.width, this._gl.canvas.height);
+        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RGBA8, this._gl.canvas.width, this._gl.canvas.height);
         this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.RENDERBUFFER, this._renderColor);
 
-        this._renderDepth = this._gl.createTexture();
-        this._gl.bindTexture(this._gl.TEXTURE_2D, this._renderDepth);
-        this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.DEPTH_COMPONENT24, this._gl.canvas.width, this._gl.canvas.height, 0, this._gl.DEPTH_COMPONENT, this._gl.UNSIGNED_INT, null);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, this._gl.NEAREST);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, this._gl.NEAREST);
-        this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.TEXTURE_2D, this._renderDepth, 0);
+        this._renderDepth = this._gl.createRenderbuffer();
+        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._renderDepth);
+        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.DEPTH_COMPONENT24, this._gl.canvas.width, this._gl.canvas.height);
+        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.RENDERBUFFER, this._renderDepth);
 
-        this._velocityTexture = this._gl.createTexture();
-        this._gl.bindTexture(this._gl.TEXTURE_2D, this._velocityTexture);
-        this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RG16F, this._gl.canvas.width, this._gl.canvas.height, 0, this._gl.RG, this._gl.FLOAT, null);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, this._gl.NEAREST);
-        this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, this._gl.NEAREST);
+
+        this._velocityTexture = this._gl.createRenderbuffer();
+        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._velocityTexture);
+        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RGBA8, this._gl.canvas.width, this._gl.canvas.height);
+        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT1, this._gl.RENDERBUFFER, this._velocityTexture);
+
+        this._velocityBuffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, true, true);
         
-        this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT1, this._gl.TEXTURE_2D, this._velocityTexture, 0);
 
         // if the framebuffer isn't complete, throw an error
         if (this._gl.checkFramebufferStatus(this._gl.FRAMEBUFFER) !== this._gl.FRAMEBUFFER_COMPLETE) {
@@ -140,15 +144,25 @@ export class Camera {
             buffer.reallocate(this._effectiveWidth, this._effectiveHeight);
         }
 
+        // resize the multisample buffers
+        this.setSampleCount(this._multiSample);
+    }
+
+    public setSampleCount(count: number) {
+        this._multiSample = count;
+
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._renderbuffer);
         this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._renderColor);
-        this._gl.renderbufferStorage(this._gl.RENDERBUFFER, this._gl.RGBA8, this._effectiveWidth, this._effectiveHeight);
-        this._gl.bindTexture(this._gl.TEXTURE_2D, this._renderDepth);
-        this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.DEPTH_COMPONENT24, this._effectiveWidth, this._effectiveHeight, 0, this._gl.DEPTH_COMPONENT, this._gl.UNSIGNED_INT, null);
-        this._gl.bindTexture(this._gl.TEXTURE_2D, this._velocityTexture);
-        this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RG16F, this._effectiveWidth, this._effectiveHeight, 0, this._gl.RG, this._gl.FLOAT, null);
-        this._gl.bindTexture(this._gl.TEXTURE_2D, null);
-        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, null);
+        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RGBA8, this._effectiveWidth, this._effectiveHeight);
+        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0, this._gl.RENDERBUFFER, this._renderColor);
+
+        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._renderDepth);
+        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.DEPTH_COMPONENT24, this._effectiveWidth, this._effectiveHeight);
+        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.RENDERBUFFER, this._renderDepth);
+
+        this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._velocityTexture);
+        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RGBA8, this._effectiveWidth, this._effectiveHeight);
+        this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT1, this._gl.RENDERBUFFER, this._velocityTexture);
     }
 
     public draw(drawable: Drawable, target: FBO | null = null) {
@@ -202,13 +216,20 @@ export class Camera {
         this._gl.clear(this._gl.COLOR_BUFFER_BIT)
         this._gl.blitFramebuffer(0, 0, this._effectiveWidth, this._effectiveHeight, 0, 0, this._effectiveWidth, this._effectiveHeight, this._gl.COLOR_BUFFER_BIT, this._gl.NEAREST);
 
+        this._gl.bindFramebuffer(this._gl.DRAW_FRAMEBUFFER, this._velocityBuffer._framebuffer);
+        this._gl.readBuffer(this._gl.COLOR_ATTACHMENT1);
+        this._gl.blitFramebuffer(0, 0, this._effectiveWidth, this._effectiveHeight, 0, 0, this._effectiveWidth, this._effectiveHeight, this._gl.COLOR_BUFFER_BIT, this._gl.NEAREST);
+        this._gl.readBuffer(this._gl.COLOR_ATTACHMENT0);
+        this._gl.blitFramebuffer(0, 0, this._effectiveWidth, this._effectiveHeight, 0, 0, this._effectiveWidth, this._effectiveHeight, this._gl.DEPTH_BUFFER_BIT, this._gl.NEAREST);
+    
+
         this._postBuffer.swap();
     }
 
     public postPass(program: PostEffect) {
-        program.setTexture("uVelocity", this._velocityTexture);
+        program.setTexture("uVelocity", this._velocityBuffer);
         program.setTexture("uColor", this._postBuffer.getRead());
-        program.setTexture("uDepth", this._renderDepth);
+        program.setTexture("uDepth", this._velocityBuffer, TextureTarget.DEPTH);
         program.setUniform("uRenderScale", this._gl.FLOAT, this.renderScale);
         program.use();
         this._gl.bindVertexArray(this._postVao);

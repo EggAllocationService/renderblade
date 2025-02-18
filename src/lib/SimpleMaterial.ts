@@ -14,7 +14,6 @@ export class SimpleMaterial extends Material {
         fsText = fsText.replace("#version 300 es", "");
         fsText = fsText.replace("\nprecision", "\n//");
         const templatedFs = baseFs.replace("#CHILD_FRAG", fsText);
-        console.log(templatedFs);
         super(gl, templated, templatedFs);
     }
 }

@@ -105,6 +105,7 @@ async function main() {
     stippleEffect.setTexture("uBg", paperTexture);
 
     camera.setPostProcessing(true);
+    camera.setSampleCount(gl.getParameter(gl.MAX_SAMPLES));
 
     const invertBuffer = camera.createExtraBuffer("invert", TextureTarget.DEPTH);
     const monkey = new Object3D(gl, monkeyObj);
