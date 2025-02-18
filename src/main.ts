@@ -17,6 +17,9 @@ import litFs from "./lit.frag?raw";
 import colorFs from "./solid.frag?raw";
 import invertFs from "./invert.frag?raw";
 
+import FXAAFrag from "./FXAA.frag?raw";
+import blendFragment from "./blend.frag?raw";
+
 import {Pane} from 'tweakpane';
 import { SimpleMaterial } from './lib/SimpleMaterial';
 
@@ -93,10 +96,15 @@ async function main() {
     const teapot = new Object3D(gl, teapotObj);
     const outlineEffect = new PostEffect(gl, outlineFs);
     const stippleEffect = new PostEffect(gl, stippleFs);
+    const fxaaEffect = new PostEffect(gl, FXAAFrag);
+    const blendEffect = new PostEffect(gl, blendFragment);
 
     const litMaterial = new SimpleMaterial(gl, baseVs, litFs);
     sphere.setMaterial(litMaterial);
     teapot.setMaterial(litMaterial);
+
+    const outlineBuffer = camera.createExtraBuffer("outline", TextureTarget.COLOR);
+    const aaOutlineBuffer = camera.createExtraBuffer("aaOutline", TextureTarget.COLOR);
 
     const blueNoise = await fetchTexture(gl, bluenoise);
     const paperTexture = await fetchTexture(gl, paper);
@@ -166,7 +174,10 @@ async function main() {
         }
         if (state.outline) {
             outlineEffect.setUniform("uOutlineColor", gl.FLOAT_VEC3, state.inkColor.r, state.inkColor.g, state.inkColor.b);
-            camera.postPass(outlineEffect);
+            camera.postPass(outlineEffect, outlineBuffer);
+            camera.postPass(fxaaEffect, aaOutlineBuffer, outlineBuffer);
+            blendEffect.setTexture("uOutline", aaOutlineBuffer, TextureTarget.COLOR);
+            camera.postPass(blendEffect);
         }
         if (state.invertMask) {
             invertEffect.setTexture("uMask", invertBuffer, TextureTarget.DEPTH);

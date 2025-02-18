@@ -13,6 +13,8 @@ float linearDepth(float depth) {
 in vec2 v_uv;
 out vec4 color;
 
+
+
 void main() {
     vec3 intensity = texture(uColor, v_uv).xyz;
     float mask = linearDepth(texture(uMask, v_uv).x);

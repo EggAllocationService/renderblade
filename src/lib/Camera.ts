@@ -7,7 +7,6 @@ import { TextureTarget } from "./Material";
 
 export class Camera {
     private _gl: WebGL2RenderingContext;
-    private _enablePostProcessing: boolean = true;
     private _postBuffer: DoublesidedFBO;
 
     private _renderbuffer: WebGLFramebuffer;
@@ -97,10 +96,6 @@ export class Camera {
 
         this._effectiveWidth = this._gl.canvas.width;
         this._effectiveHeight = this._gl.canvas.height;
-    }
-
-    public setPostProcessing(enable: boolean) {
-        this._enablePostProcessing = enable
     }
 
     public setRenderScale(ssaa: number) {
@@ -226,18 +221,27 @@ export class Camera {
         this._postBuffer.swap();
     }
 
-    public postPass(program: PostEffect) {
+    public postPass(program: PostEffect, target: FBO | null = null, source: FBO = this._postBuffer.getRead()) {
+
         program.setTexture("uVelocity", this._velocityBuffer);
-        program.setTexture("uColor", this._postBuffer.getRead());
+        program.setTexture("uColor", source);
         program.setTexture("uDepth", this._velocityBuffer, TextureTarget.DEPTH);
         program.setUniform("uRenderScale", this._gl.FLOAT, this.renderScale);
         program.use();
         this._gl.bindVertexArray(this._postVao);
-        this._postBuffer.bindWriteAsTarget();
-        this._gl.drawArrays(this._gl.TRIANGLE_STRIP, 0, 4);
-
-        this._postBuffer.unbind();
-        this._postBuffer.swap();
+        
+        if (target == null) {
+            this._postBuffer.bindWriteAsTarget();
+            this._gl.drawArrays(this._gl.TRIANGLE_STRIP, 0, 4);
+    
+            this._postBuffer.unbind();
+            this._postBuffer.swap();
+        } else {
+            target.bindAsTarget();
+            this._gl.drawArrays(this._gl.TRIANGLE_STRIP, 0, 4);
+            target.unbind();
+        }
+        
     }
 
     public postFinished() {
