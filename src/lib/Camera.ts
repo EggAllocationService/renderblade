@@ -165,6 +165,7 @@ export class Camera {
         let projectionMatrix = this._projectionMatrix;
         if (target == null) {
             this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._renderbuffer);
+            this._gl.viewport(0, 0, this._effectiveWidth, this._effectiveHeight);
         } else {
             target.bindAsTarget();
             if (!target.hasColor) {
