@@ -162,6 +162,7 @@ export class Camera {
 
     public draw(drawable: Drawable, target: FBO | null = null) {
         // This is the only line that is different from the Drawable interface
+        let projectionMatrix = this._projectionMatrix;
         if (target == null) {
             this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._renderbuffer);
         } else {
@@ -172,9 +173,13 @@ export class Camera {
                 this._gl.colorMask(true, true, true, true);
             }
             this._gl.depthMask(target.hasDepth)
+
+            if (target.width != this._effectiveWidth || target.height != this._effectiveHeight) {
+                projectionMatrix = Matrix4.IDENTITY.clone().perspective({fovy: this._cameraData.fov, aspect: target.width / target.height, near: this._cameraData.near, far: this._cameraData.far})
+            }
         }
         
-        this._frameDrawnTris += drawable.draw(this._projectionMatrix, this._viewMatrix);
+        this._frameDrawnTris += drawable.draw(projectionMatrix, this._viewMatrix);
     }
 
     private regenerateProjectionMatrix() {

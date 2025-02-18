@@ -126,6 +126,14 @@ export class FBO {
         this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
     }
 
+    public get width() {
+        return this._width;
+    }
+
+    public get height() {
+        return this._height;
+    }
+
     public static fromImage(gl: WebGL2RenderingContext, i: HTMLImageElement) {
         if (!i.complete) {
             throw new Error('Image is not loaded');
