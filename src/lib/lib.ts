@@ -8,3 +8,6 @@ export { fetchTexture } from "./util";
 export { PostEffect } from "./PostEffect";
 export { Object3D } from "./Object3D";
 
+import simpleVert from "./shaders/simple.vert?raw";
+
+export const simpleVertexShader = simpleVert;
