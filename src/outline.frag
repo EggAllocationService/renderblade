@@ -56,6 +56,8 @@ void main() {
     float edge_x = dot(sobel_x[0], surrounding[0]) + dot(sobel_x[1], surrounding[1]) + dot(sobel_x[2], surrounding[2]);
     float edge_y = dot(sobel_y[0], surrounding[0]) + dot(sobel_y[1], surrounding[1]) + dot(sobel_y[2], surrounding[2]);
     float edge = sqrt(edge_x * edge_x + edge_y * edge_y);
+    edge = abs(edge);
     edge = min(1.0, edge);
+    edge = max (0.0, edge);
     color = mix(vec4(0), vec4(uOutlineColor * vec3(0.97f, 0.97f, 0.8f), 1.0), edge);
 }
