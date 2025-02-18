@@ -30,8 +30,4 @@ void main() {
     v_position = pos;
     gl_Position = pos;
     v_previousPosition = old_pos;
-
-    /*v_normal = transpose(inverse(mat3(u_modelMatrix))) * a_normal;
-    gl_Position = u_pvmMatrix * vec4(a_position, 1.0);*/
-
 }
