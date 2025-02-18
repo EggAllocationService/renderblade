@@ -104,7 +104,6 @@ async function main() {
     stippleEffect.setTexture("uNoise", blueNoise);
     stippleEffect.setTexture("uBg", paperTexture);
 
-    camera.setPostProcessing(true);
     camera.setSampleCount(gl.getParameter(gl.MAX_SAMPLES));
 
     const invertBuffer = camera.createExtraBuffer("invert", TextureTarget.DEPTH);
