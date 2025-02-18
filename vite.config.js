@@ -7,7 +7,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
     plugins: [dts({
-        insertTypesEntry: true
+        insertTypesEntry: true,
+        rollupTypes: true,
+        exclude: ["**/node_modules/**", "Pane", "tweakpane", "@tweakpane/core"],
     })],
   build: {
     lib: {
@@ -15,12 +17,13 @@ export default defineConfig({
       name: 'Renderblade',
       // the proper extensions will be added
       fileName: 'renderblade',
-      formats: ['es']
+      formats: ['es'],
+      
     },
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled
       // into your library
-      external: ['tweakpane'],
+      external: ['tweakpane', "@tweakpane/core"],
       output: {
         // Provide global variables to use in the UMD build
         // for externalized deps
