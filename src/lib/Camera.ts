@@ -191,11 +191,15 @@ export class Camera {
         this._viewMatrix = Matrix4.IDENTITY.clone().lookAt({eye: [0, 0, 5], center: [0, 0, 0], up: [0, 1, 0]})
     }
 
-    public createExtraBuffer(name: string, targets: TextureTarget = TextureTarget.COLOR | TextureTarget.DEPTH): FBO {
-        let buffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, 
+    public createExtraBuffer(name: string, targets: TextureTarget = TextureTarget.COLOR | TextureTarget.DEPTH, size: "auto" | {width: number, height: number} = "auto"): FBO {
+        const width = size === "auto" ? this._effectiveWidth : size.width;
+        const height = size === "auto" ? this._effectiveHeight : size.height;
+        let buffer = new FBO(this._gl, width, height, 
             this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, 
             this._gl.UNSIGNED_BYTE, (targets & TextureTarget.DEPTH) > 0, (targets & TextureTarget.COLOR) > 0);
-        this._extraBuffers.set(name, buffer);
+        if (size == "auto") {
+            this._extraBuffers.set(name, buffer);
+        }
         return buffer;
     }
 
