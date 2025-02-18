@@ -80,10 +80,10 @@ export class Camera {
 
         this._velocityTexture = this._gl.createRenderbuffer();
         this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._velocityTexture);
-        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RGBA8, this._gl.canvas.width, this._gl.canvas.height);
+        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RG16F, this._gl.canvas.width, this._gl.canvas.height);
         this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT1, this._gl.RENDERBUFFER, this._velocityTexture);
 
-        this._velocityBuffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RGBA, this._gl.RGBA, this._gl.UNSIGNED_BYTE, true, true);
+        this._velocityBuffer = new FBO(this._gl, this._gl.canvas.width, this._gl.canvas.height, this._gl.LINEAR, this._gl.CLAMP_TO_EDGE, this._gl.RG, this._gl.RG16F, this._gl.FLOAT, true, true);
         
 
         // if the framebuffer isn't complete, throw an error
@@ -156,7 +156,7 @@ export class Camera {
         this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.DEPTH_ATTACHMENT, this._gl.RENDERBUFFER, this._renderDepth);
 
         this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._velocityTexture);
-        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RGBA8, this._effectiveWidth, this._effectiveHeight);
+        this._gl.renderbufferStorageMultisample(this._gl.RENDERBUFFER, this._multiSample, this._gl.RG16F, this._effectiveWidth, this._effectiveHeight);
         this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT1, this._gl.RENDERBUFFER, this._velocityTexture);
     }
 
