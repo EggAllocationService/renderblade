@@ -15,7 +15,8 @@ in vec2 v_uv;
 in vec4 v_position;
 in vec4 v_previousPosition;
 void main() {
-    color = fragment(v_uv, v_normal, v_position);
+    vec3 norm = normalize(v_normal);
+    color = fragment(v_uv, norm, v_position);
 
     vec3 cur = v_position.xyz / v_position.w;
     vec3 old = v_previousPosition.xyz / v_previousPosition.w;
