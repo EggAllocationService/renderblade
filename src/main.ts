@@ -10,14 +10,12 @@ import stippleFs from './stipple.frag?raw'
 import { fetchTexture } from './lib/util';
 import bluenoise from './textures/bluenoise.png';
 import paper from './textures/paper.png';
-import { Material, TextureTarget } from './lib/Material';
+import { TextureTarget } from './lib/Material';
 
 import baseVs from "./lib/shaders/simple.vert?raw";
 import litFs from "./lit.frag?raw";
 import colorFs from "./solid.frag?raw";
 import invertFs from "./invert.frag?raw";
-
-import taaFs from "./lib/shaders/taa.frag?raw";
 
 import {Pane} from 'tweakpane';
 import { SimpleMaterial } from './lib/SimpleMaterial';

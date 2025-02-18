@@ -4,12 +4,8 @@ import Drawable from "./interface/Drawable";
 import baseVertexShader from './shaders/simple.vert?raw';
 import baseFragmentShader from './shaders/normal.frag?raw';
 
-import velocityVertexShader from './shaders/base.vert?raw';
-import velocityFragmentShader from './shaders/velocity.frag?raw';
-
 import { Matrix4, Vector3 } from "@math.gl/core";
 import { Material } from "./Material";
-import { FBO } from "./FBO";
 import { SimpleMaterial } from "./SimpleMaterial";
 
 export class Object3D implements Drawable {
