@@ -6,9 +6,9 @@ export class Material extends Program {
         super(gl, vsText, fsText);
     }
 
-    private _textures: Map<string, {buffer: FBO, target: TextureTarget}> = new Map();
+    private _textures: Map<string, {buffer: FBO | WebGLTexture, target: TextureTarget}> = new Map();
 
-    public setTexture(name: string, texture: FBO, target: TextureTarget = TextureTarget.COLOR): void {
+    public setTexture(name: string, texture: FBO | WebGLTexture, target: TextureTarget = TextureTarget.COLOR): void {
         this._textures.set(name, {buffer: texture, target});
     }
 
@@ -18,10 +18,15 @@ export class Material extends Program {
             if (this._uniforms.get(name) === undefined) {
                 continue;
             }
-            if (texture.target === TextureTarget.COLOR) {
-                texture.buffer.attach(i);
+            if (texture.buffer instanceof FBO) {
+                if (texture.target === TextureTarget.COLOR) {
+                    texture.buffer.attach(i);
+                } else {
+                    texture.buffer.attachDepth(i);
+                }
             } else {
-                texture.buffer.attachDepth(i);
+                this._gl.activeTexture(this._gl.TEXTURE0 + i);
+                this._gl.bindTexture(this._gl.TEXTURE_2D, texture.buffer);
             }
             this.setUniform(name, this._gl.INT, i);
             i++;
