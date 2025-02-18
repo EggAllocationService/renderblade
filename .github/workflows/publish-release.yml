@@ -19,7 +19,7 @@ jobs:
           scope: '@octocat'
       - run: npm ci
       - run: npm run build
-      - run: node generatePackageJson.js
-      - run: cd dist && npm publish ${{ github.ref }}
+      - run: node generatePackageJson.js ${{ github.ref }}
+      - run: cd dist && npm publish 
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
