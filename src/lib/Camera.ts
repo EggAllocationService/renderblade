@@ -1,6 +1,6 @@
 import { DoublesidedFBO, FBO } from "./FBO";
 import Drawable from "./interface/Drawable";
-import { Matrix4 } from "@math.gl/core";
+import { Matrix4, Vector3 } from "@math.gl/core";
 import { PostEffect } from "./PostEffect";
 import copyFs from './shaders/copy.frag?raw'
 import { TextureTarget } from "./Material";
@@ -179,6 +179,10 @@ export class Camera {
 
     private regenerateProjectionMatrix() {
         this._projectionMatrix = Matrix4.IDENTITY.clone().perspective({fovy: this._cameraData.fov, aspect: this._cameraData.aspect, near: this._cameraData.near, far: this._cameraData.far})
+    }
+
+    public setLocationAndLookTarget(eye: Vector3, target: Vector3) {
+        this._viewMatrix = Matrix4.IDENTITY.clone().lookAt({eye: eye.toArray(), center: target.toArray(), up: [0, 1, 0]})
     }
 
     public setPerspectiveMatrix(fov: number, aspect: number, near: number, far: number) {
